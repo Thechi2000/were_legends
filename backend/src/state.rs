@@ -1,10 +1,13 @@
 use crate::game::{messages::Message, GameState};
-use std::{collections::HashMap, sync::Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 use uuid::Uuid;
 
 pub struct State {
     pub games: Vec<GameState>,
-    pub messages: HashMap<Uuid, Mutex<Vec<Message>>>,
+    pub messages: HashMap<Uuid, Arc<Mutex<Vec<Message>>>>,
 }
 
 impl State {
