@@ -49,7 +49,7 @@ pub struct PlayerData {
 pub struct Item {
     // TODO
     #[softeq(uid)]
-    pub item_id: usize
+    pub item_id: usize,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]

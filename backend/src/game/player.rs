@@ -20,13 +20,12 @@ impl Player {
     }
 }
 
-
 impl PlayerClass {
     pub fn receive_update(
         &self,
-        mutation: &<Option<MergedAllGameData> as Mutable>::Mutation,
-        game_data: &Option<MergedAllGameData>,
-        player: &Player,
+        _mutation: &<Option<MergedAllGameData> as Mutable>::Mutation,
+        _game_data: &Option<MergedAllGameData>,
+        _player: &Player,
     ) {
         todo!()
     }

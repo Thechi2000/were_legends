@@ -4,8 +4,8 @@ use mutable::{cmp::SoftEq, Mutable};
 use std::{collections::HashMap, sync::RwLock};
 use uuid::Uuid;
 
-pub mod player;
 pub mod messages;
+pub mod player;
 
 pub struct GameState {
     players: HashMap<Uuid, Player>,

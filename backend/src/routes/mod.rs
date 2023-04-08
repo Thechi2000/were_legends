@@ -1,4 +1,4 @@
-use crate::game::messages::{Message, self};
+use crate::game::messages::Message;
 use crate::AppState;
 use rocket::get;
 use rocket::http::Status;
