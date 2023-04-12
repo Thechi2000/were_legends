@@ -7,14 +7,14 @@ use uuid::Uuid;
 
 pub struct State {
     pub games: Vec<GameState>,
-    pub messages: HashMap<Uuid, Arc<Mutex<Vec<Message>>>>,
+    pub messages: Mutex<HashMap<Uuid, Arc<Mutex<Vec<Message>>>>>,
 }
 
 impl State {
     pub fn new() -> Self {
         Self {
             games: vec![],
-            messages: HashMap::default(),
+            messages: Mutex::default(),
         }
     }
 
