@@ -20,7 +20,10 @@ pub async fn login(state: &AppState) -> Result<String, Status> {
 }
 
 #[get("/updates")]
-pub async fn get_updates(session: UserSession, state: &AppState) -> Result<Json<Vec<Message>>, Status> {
+pub async fn get_updates(
+    session: UserSession,
+    state: &AppState,
+) -> Result<Json<Vec<Message>>, Status> {
     let messages_lock = state.messages.lock().unwrap();
 
     let Some(messages_mutex) = messages_lock.get(&session.uid) else {

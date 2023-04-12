@@ -3,8 +3,8 @@ use rocket::launch;
 pub mod game;
 pub mod models;
 pub mod routes;
-pub mod state;
 pub mod session_management;
+pub mod state;
 
 pub type AppState = rocket::State<state::State>;
 
