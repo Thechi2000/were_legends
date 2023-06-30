@@ -70,9 +70,11 @@ impl GameState {
                 match event {
                     GameEvent::PlayerJoin(uid) => {
                         for player in state.read().unwrap().players.values() {
-                            player.proxy.send_message(messages::Message::PlayerJoin(uid))
+                            player
+                                .proxy
+                                .send_message(messages::Message::PlayerJoin(uid))
                         }
-                    },
+                    }
                     _ => todo!(),
                 }
             }

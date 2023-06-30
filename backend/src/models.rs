@@ -1,5 +1,5 @@
-use mutable::{Mutable, SoftEq};
 use mutable::cmp::SoftEq;
+use mutable::{Mutable, SoftEq};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]

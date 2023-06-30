@@ -1,5 +1,8 @@
 use crate::game::{player::proxy::PlayerProxy, GameState};
-use std::{collections::HashMap, sync::{Mutex, Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, RwLock},
+};
 use uuid::Uuid;
 
 pub struct State {
@@ -22,7 +25,10 @@ impl State {
     }
 
     pub fn get_game_by_player(&self, uuid: Uuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
-        self.games.iter().find(|g| g.1.read().unwrap().has_player(uuid)).map(|(u, g)| (*u, g.clone()))
+        self.games
+            .iter()
+            .find(|g| g.1.read().unwrap().has_player(uuid))
+            .map(|(u, g)| (*u, g.clone()))
     }
 
     pub fn get_game_by_id(&self, uuid: Uuid) -> Option<Arc<RwLock<GameState>>> {
@@ -31,10 +37,10 @@ impl State {
 
     pub fn get_or_create_proxy(&self, uid: Uuid) -> PlayerProxy {
         let mut lock = self.messages.lock().unwrap();
-        
-        if !lock.contains_key(&uid) {
+
+        if let std::collections::hash_map::Entry::Vacant(e) = lock.entry(uid) {
             let proxy = PlayerProxy::default();
-            lock.insert(uid, proxy.clone());
+            e.insert(proxy.clone());
             proxy
         } else {
             lock.get(&uid).unwrap().clone()

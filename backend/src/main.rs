@@ -16,5 +16,13 @@ pub type AppState = rocket::State<Mutex<state::State>>;
 fn rocket() -> _ {
     rocket::build()
         .manage(Mutex::new(state::State::default()))
-        .mount("/", rocket::routes![routes::get_updates, routes::login, routes::game::create_game, routes::game::join_game])
+        .mount(
+            "/",
+            rocket::routes![
+                routes::get_updates,
+                routes::login,
+                routes::game::create_game,
+                routes::game::join_game
+            ],
+        )
 }
