@@ -10,6 +10,9 @@ use std::{fmt::Debug, io::Cursor};
 #[serde(tag = "error")]
 pub enum Error {
     NotFound,
+    NotInGame,
+    AlreadyInGame,
+    MaxPlayerReached,
     Internal { msg: String },
 }
 
@@ -18,6 +21,9 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
         let status = match self {
             Error::NotFound => Status::NotFound,
             Error::Internal { .. } => Status::InternalServerError,
+            Error::AlreadyInGame => Status::BadRequest,
+            Error::NotInGame => Status::BadRequest,
+            Error::MaxPlayerReached => Status::BadRequest,
         };
         let Ok(body) = serde_json::to_string(&self) else {
             return Err(Status::InternalServerError)
@@ -33,6 +39,14 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
 
 impl Error {
     pub fn from<T: Debug>(e: T) -> Self {
+        Self::Internal {
+            msg: format!("{:?}", e),
+        }
+    }
+}
+
+impl<T> From<tokio::sync::mpsc::error::SendError<T>> for Error {
+    fn from(e: tokio::sync::mpsc::error::SendError<T>) -> Self {
         Self::Internal {
             msg: format!("{:?}", e),
         }

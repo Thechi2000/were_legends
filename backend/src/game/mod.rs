@@ -1,65 +1,81 @@
-use self::player::Player;
-use crate::models::{ActivePlayer, Events, GameData, PlayerData};
-use mutable::{cmp::SoftEq, Mutable};
-use std::{collections::HashMap, sync::RwLock};
+use self::player::{proxy::PlayerProxy, Player};
+use crate::{
+    models::{MatchDto, MatchDtoMutation},
+    routes::error::Error,
+};
+use std::{
+    collections::{hash_map, HashMap},
+    sync::{Arc, RwLock},
+};
+use tokio::sync::mpsc::{Receiver, Sender};
 use uuid::Uuid;
 
 pub mod messages;
 pub mod player;
 
+macro_rules! send_event {
+    ($queue:expr, $event:expr) => {{
+        let queue = $queue.clone();
+        tokio::spawn(async move {
+            queue.send($event).await.unwrap();
+        })
+    }};
+}
+
+pub enum GameEvent {
+    MatchDtoMutation(MatchDtoMutation),
+    PlayerJoin(Uuid),
+    GameStart,
+}
+
 pub struct GameState {
     players: HashMap<Uuid, Player>,
-    data: RwLock<Option<MergedAllGameData>>,
-}
-
-#[derive(Mutable, Clone, Debug, PartialEq)]
-pub struct MergedAllGameData {
-    pub all_players: Vec<MergedPlayerData>,
-    pub events: Events,
-    pub game_data: GameData,
-}
-
-#[derive(Mutable, Clone, Debug, PartialEq)]
-pub struct MergedPlayerData {
-    pub active: Option<ActivePlayer>,
-    pub player: PlayerData,
-}
-
-impl SoftEq for MergedPlayerData {
-    type Uid = String;
-
-    fn uid(&self) -> Self::Uid {
-        self.player.summoner_name.clone()
-    }
+    data: RwLock<Option<MatchDto>>,
+    event_queue: Sender<GameEvent>,
 }
 
 impl GameState {
-    pub fn new() -> Self {
-        Self {
-            players: HashMap::new(),
-            data: RwLock::new(None),
-        }
+    pub fn new() -> Arc<RwLock<Self>> {
+        let (tx, rx) = tokio::sync::mpsc::channel(100);
+        let state = Arc::new(RwLock::new(Self {
+            players: Default::default(),
+            data: Default::default(),
+            event_queue: tx,
+        }));
+
+        tokio::spawn(Self::listen_events(rx, state.clone()));
+
+        state
     }
 
     pub fn has_player(&self, uuid: Uuid) -> bool {
         self.players.contains_key(&uuid)
     }
 
-    pub fn update_state(&self, new_state: Option<MergedAllGameData>) {
-        let mutations = <Option<MergedAllGameData> as Mutable>::update(
-            self.data.write().as_mut().unwrap(),
-            new_state,
-        );
-        for mutation in mutations.iter() {
-            for player in self.players.values() {
-                player.receive_update(mutation, &self.data.read().unwrap())
-            }
+    pub fn add_player(&mut self, uid: Uuid, proxy: PlayerProxy) -> Result<(), Error> {
+        if self.players.len() > 5 {
+            Err(Error::MaxPlayerReached)
+        } else if let hash_map::Entry::Vacant(e) = self.players.entry(uid) {
+            e.insert(Player::new(proxy));
+            send_event!(self.event_queue, GameEvent::PlayerJoin(uid));
+            Ok(())
+        } else {
+            Err(Error::AlreadyInGame)
         }
     }
-}
 
-impl Default for GameState {
-    fn default() -> Self {
-        Self::new()
+    pub async fn listen_events(mut rx: Receiver<GameEvent>, state: Arc<RwLock<Self>>) {
+        loop {
+            while let Some(event) = rx.recv().await {
+                match event {
+                    GameEvent::PlayerJoin(uid) => {
+                        for player in state.read().unwrap().players.values() {
+                            player.proxy.send_message(messages::Message::PlayerJoin(uid))
+                        }
+                    },
+                    _ => todo!(),
+                }
+            }
+        }
     }
 }
