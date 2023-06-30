@@ -5,22 +5,16 @@ use crate::{
 };
 use std::{
     collections::{hash_map, HashMap},
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{
+    mpsc::{Receiver, Sender},
+    RwLock,
+};
 use uuid::Uuid;
 
 pub mod messages;
 pub mod player;
-
-macro_rules! send_event {
-    ($queue:expr, $event:expr) => {{
-        let queue = $queue.clone();
-        tokio::spawn(async move {
-            queue.send($event).await.unwrap();
-        })
-    }};
-}
 
 pub enum GameEvent {
     MatchDtoMutation(MatchDtoMutation),
@@ -52,12 +46,12 @@ impl GameState {
         self.players.contains_key(&uuid)
     }
 
-    pub fn add_player(&mut self, uid: Uuid, proxy: PlayerProxy) -> Result<(), Error> {
+    pub async fn add_player(&mut self, uid: Uuid, proxy: PlayerProxy) -> Result<(), Error> {
         if self.players.len() > 5 {
             Err(Error::MaxPlayerReached)
         } else if let hash_map::Entry::Vacant(e) = self.players.entry(uid) {
             e.insert(Player::new(proxy));
-            send_event!(self.event_queue, GameEvent::PlayerJoin(uid));
+            self.event_queue.send(GameEvent::PlayerJoin(uid)).await?;
             Ok(())
         } else {
             Err(Error::AlreadyInGame)
@@ -69,7 +63,7 @@ impl GameState {
             while let Some(event) = rx.recv().await {
                 match event {
                     GameEvent::PlayerJoin(uid) => {
-                        for player in state.read().unwrap().players.values() {
+                        for player in state.read().await.players.values() {
                             player
                                 .proxy
                                 .send_message(messages::Message::PlayerJoin(uid))

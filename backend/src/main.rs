@@ -1,10 +1,10 @@
 #![allow(dead_code)] // TODO
 
-use std::sync::Mutex;
-
 use rocket::launch;
+use tokio::sync::Mutex;
 
 pub mod game;
+pub mod lol_api;
 pub mod models;
 pub mod routes;
 pub mod session_management;

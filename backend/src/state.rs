@@ -1,8 +1,9 @@
 use crate::game::{player::proxy::PlayerProxy, GameState};
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex, RwLock},
+    sync::{Arc, Mutex},
 };
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 pub struct State {
@@ -24,11 +25,14 @@ impl State {
         (uid, self.get_game_by_id(uid).unwrap())
     }
 
-    pub fn get_game_by_player(&self, uuid: Uuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
-        self.games
-            .iter()
-            .find(|g| g.1.read().unwrap().has_player(uuid))
-            .map(|(u, g)| (*u, g.clone()))
+    pub async fn get_game_by_player(&self, uuid: Uuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
+        for g in self.games.iter() {
+            if g.1.read().await.has_player(uuid) {
+                return Some((*g.0, g.1.clone()));
+            }
+        }
+
+        None
     }
 
     pub fn get_game_by_id(&self, uuid: Uuid) -> Option<Arc<RwLock<GameState>>> {

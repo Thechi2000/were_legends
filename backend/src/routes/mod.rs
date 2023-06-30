@@ -10,7 +10,7 @@ pub mod game;
 
 #[get("/login")]
 pub async fn login(state: &AppState) -> Result<String, Error> {
-    let state = state.lock().unwrap();
+    let state = state.lock().await;
     let session = UserSession::default();
     state.get_or_create_proxy(session.uid);
     session.encode().map_err(Error::from)
@@ -21,7 +21,7 @@ pub async fn get_updates(
     session: UserSession,
     state: &AppState,
 ) -> Result<Json<Vec<Message>>, Error> {
-    let state = state.lock().unwrap();
+    let state = state.lock().await;
 
     let lock = state.messages.lock().unwrap();
     let Some(messages_mutex) = lock.get(&session.uid) else {
