@@ -8,6 +8,9 @@ pub struct Config {
     pub lol_api_key: String,
     #[envconfig(from = "LOL_API_REGION", default = "europe")]
     pub lol_api_region: String,
+
+    #[envconfig(from = "JWT_SECRET")]
+    pub jwt_secret: String,
 }
 
 pub static CONFIG: OnceLock<Config> = OnceLock::new();

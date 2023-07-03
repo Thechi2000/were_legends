@@ -6,10 +6,9 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::lol_api::summoners::Puuid;
+use crate::{lol_api::summoners::Puuid, env::env_config};
 
 const SESSION_COOKIE_NAME: &str = "session";
-const JWT_SECRET: &str = "best secret ever"; // TODO
 
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
@@ -34,7 +33,7 @@ impl<'r> FromRequest<'r> for UserSession {
 
             match jsonwebtoken::decode::<UserSession>(
                 cookie.value(),
-                &DecodingKey::from_secret(JWT_SECRET.as_ref()),
+                &DecodingKey::from_secret(env_config().jwt_secret.as_ref()),
                 &validation,
             ) {
                 Ok(session) => Outcome::Success(session.claims),
@@ -51,7 +50,7 @@ impl UserSession {
         jsonwebtoken::encode(
             &Header::default(),
             self,
-            &EncodingKey::from_secret(JWT_SECRET.as_ref()),
+            &EncodingKey::from_secret(env_config().jwt_secret.as_ref()),
         )
     }
 
