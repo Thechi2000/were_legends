@@ -1,6 +1,6 @@
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use rocket::{
-    http::Status,
+    http::{Cookie, Status},
     request::{FromRequest, Outcome},
     Request,
 };
@@ -56,8 +56,17 @@ impl UserSession {
     }
 
     pub fn new(puuid: Puuid) -> Self {
-        Self {
-            puuid,
-        }
+        Self { puuid }
+    }
+}
+
+impl TryFrom<UserSession> for Cookie<'_> {
+    type Error = UserSessionError;
+
+    fn try_from(value: UserSession) -> Result<Self, Self::Error> {
+        Ok(Cookie::new(
+            SESSION_COOKIE_NAME,
+            value.encode().map_err(UserSessionError::Invalid)?,
+        ))
     }
 }
