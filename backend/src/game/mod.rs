@@ -1,8 +1,7 @@
 use self::player::{proxy::PlayerProxy, Player};
 use crate::{
     lol_api::{self, summoners::Puuid},
-    models::{MatchDto, MatchDtoMutation},
-    routes::error::Error,
+    routes::error::Error, models::{MergedGameDataMutation, MergedGameData},
 };
 use std::{
     collections::{hash_map, HashMap},
@@ -19,7 +18,7 @@ pub mod messages;
 pub mod player;
 
 pub enum GameEvent {
-    MatchDtoMutation(MatchDtoMutation),
+    MatchDtoMutation(Box<MergedGameDataMutation>),
     PlayerJoin { id: Puuid, name: String },
     GameStart,
 }
@@ -34,7 +33,7 @@ pub struct GameStatus {
 pub struct GameState {
     uid: Uuid,
     players: HashMap<Puuid, Player>,
-    data: RwLock<Option<MatchDto>>,
+    data: RwLock<Option<MergedGameData>>,
     event_queue: Sender<GameEvent>,
 }
 

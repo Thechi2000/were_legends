@@ -1,238 +1,356 @@
-use mutable::cmp::SoftEq;
-use mutable::{Mutable, SoftEq};
+//! Module containing all the structures that can be deserialized from the `https://127.0.0.1:2999/liveclientdata/` endpoint.
+
+use mutable::{cmp::SoftEq, Mutable, SoftEq};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
-#[serde(rename_all = "camelCase")]
-pub struct MatchDto {
-    /// Match metadata.
-    metadata: MetadataDto,
-    /// Match info.
-    info: InfoDto,
+pub struct MergedGameData {
+    pub all_players: Vec<MergedPlayerData>,
+    pub events: Events,
+    pub game_data: GameData,
+}
+
+impl From<AllGameData> for MergedGameData {
+    fn from(value: AllGameData) -> Self {
+        MergedGameData {
+            all_players: value
+                .all_players
+                .into_iter()
+                .map(|p| MergedPlayerData {
+                    active_player: (p.summoner_name == value.active_player.summoner_name)
+                        .then_some(value.active_player.clone()),
+                    champion_name: p.champion_name,
+                    is_bot: p.is_bot,
+                    is_dead: p.is_dead,
+                    items: p.items,
+                    level: p.level,
+                    position: p.position,
+                    raw_champion_name: p.raw_champion_name,
+                    respawn_timer: p.respawn_timer,
+                    runes: p.runes,
+                    scores: p.scores,
+                    skin_id: p.skin_id,
+                    summoner_name: p.summoner_name,
+                    summoner_spells: p.summoner_spells,
+                    team: p.team,
+                })
+                .collect(),
+            events: value.events,
+            game_data: value.game_data,
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
+pub struct MergedPlayerData {
+    pub active_player: Option<ActivePlayer>,
+    pub champion_name: String,
+    pub is_bot: bool,
+    pub is_dead: bool,
+    pub items: Vec<Item>,
+    pub level: usize,
+    pub position: String, // TODO: Enum
+    pub raw_champion_name: String,
+    pub respawn_timer: f64,
+    pub runes: PartialRunes,
+    pub scores: Scores,
+    #[serde(rename = "skinID")]
+    pub skin_id: usize,
+    #[softeq(uid)]
+    pub summoner_name: String,
+    pub summoner_spells: SummonerSpells,
+    pub team: Team,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct MetadataDto {
-    /// Match data version.
-    data_version: String,
-    /// Match id.
-    match_id: String,
-    /// A list of participant PUUIDs.
-    participants: Vec<String>,
+pub struct AllGameData {
+    pub active_player: ActivePlayer,
+    pub all_players: Vec<PlayerData>,
+    pub events: Events,
+    pub game_data: GameData,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct InfoDto {
-    /// Unix timestamp for when the game is created on the game server (i.e., the loading screen).
-    game_creation: i64,
-    /// Prior to patch 11.20, this field returns the game length in milliseconds calculated from gameEndTimestamp - gameStartTimestamp. Post patch 11.20, this field returns the max timePlayed of any participant in the game in seconds, which makes the behavior of this field consistent with that of match-v4. The best way to handling the change in this field is to treat the value as milliseconds if the gameEndTimestamp field isn't in the response and to treat the value as seconds if gameEndTimestamp is in the response.
-    game_duration: i64,
-    /// Unix timestamp for when match ends on the game server. This timestamp can occasionally be significantly i64er than when the match "ends". The most reliable way of determining the timestamp for the end of the match would be to add the max time played of any participant to the gameStartTimestamp. This field was added to match-v5 in patch 11.20 on Oct 5th, 2021.
-    game_end_timestamp: i64,
-    game_id: i64,
-    /// Refer to the Game Constants documentation.
-    game_mode: String,
-    game_name: String,
-    /// Unix timestamp for when match starts on the game server.
-    game_start_timestamp: i64,
-    game_type: String,
-    /// The first two parts can be used to determine the patch a game was played on.
-    game_version: String,
-    /// Refer to the Game Constants documentation.
-    map_id: i32,
-    participants: Vec<ParticipantDto>,
-    /// Platform where the match was played.
-    platform_id: String,
-    /// Refer to the Game Constants documentation.
-    queue_id: i32,
-    teams: Vec<TeamDto>,
-    /// Tournament code used to generate the match. This field was added to match-v5 in patch 11.13 on June 23rd, 2021.
-    tournament_code: String,
+pub struct ActivePlayer {
+    pub abilities: Abilities,
+    pub champion_stats: ChampionStats,
+    pub current_gold: f64,
+    pub full_runes: FullRunes,
+    pub level: usize,
+    pub summoner_name: String,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ParticipantDto {
-    assists: i32,
-    baron_kills: i32,
-    bounty_level: i32,
-    champ_experience: i32,
-    champ_level: i32,
-    /// Prior to patch 11.4, on Feb 18th, 2021, this field returned invalid championIds. We recommend determining the champion based on the championName field for matches played prior to patch 11.4.
-    champion_id: i32,
-    champion_name: String,
-    /// This field is currently only utilized for Kayn's transformations. (Legal values: 0 - None, 1 - Slayer, 2 - Assassin)
-    champion_transform: i32,
-    consumables_purchased: i32,
-    damage_dealt_to_buildings: i32,
-    damage_dealt_to_objectives: i32,
-    damage_dealt_to_turrets: i32,
-    damage_self_mitigated: i32,
-    deaths: i32,
-    detector_wards_placed: i32,
-    double_kills: i32,
-    dragon_kills: i32,
-    first_blood_assist: bool,
-    first_blood_kill: bool,
-    first_tower_assist: bool,
-    first_tower_kill: bool,
-    game_ended_in_early_surrender: bool,
-    game_ended_in_surrender: bool,
-    gold_earned: i32,
-    gold_spent: i32,
-    /// Both individualPosition and teamPosition are computed by the game server and are different versions of the most likely position played by a player. The individualPosition is the best guess for which position the player actually played in isolation of anything else. The teamPosition is the best guess for which position the player actually played if we add the constrai32 that each team must have one top player, one jungle, one middle, etc. Generally the recommendation is to use the teamPosition field over the individualPosition field.
-    individual_position: String,
-    inhibitor_kills: i32,
-    inhibitor_takedowns: i32,
-    inhibitors_lost: i32,
-    item0: i32,
-    item1: i32,
-    item2: i32,
-    item3: i32,
-    item4: i32,
-    item5: i32,
-    item6: i32,
-    items_purchased: i32,
-    killing_sprees: i32,
-    kills: i32,
-    lane: String,
-    largest_critical_strike: i32,
-    largest_killing_spree: i32,
-    largest_multi_kill: i32,
-    i64est_time_spent_living: i32,
-    magic_damage_dealt: i32,
-    magic_damage_dealt_to_champions: i32,
-    magic_damage_taken: i32,
-    neutral_minions_killed: i32,
-    nexus_kills: i32,
-    nexus_takedowns: i32,
-    nexus_lost: i32,
-    objectives_stolen: i32,
-    objectives_stolen_assists: i32,
-    participant_id: i32,
-    penta_kills: i32,
-    perks: PerksDto,
-    physical_damage_dealt: i32,
-    physical_damage_dealt_to_champions: i32,
-    physical_damage_taken: i32,
-    profile_icon: i32,
-    puuid: String,
-    quadra_kills: i32,
-    riot_id_name: String,
-    riot_id_tagline: String,
-    role: String,
-    sight_wards_bought_in_game: i32,
-    spell1_casts: i32,
-    spell2_casts: i32,
-    spell3_casts: i32,
-    spell4_casts: i32,
-    summoner1_casts: i32,
-    summoner1_id: i32,
-    summoner2_casts: i32,
-    summoner2_id: i32,
+pub struct PlayerData {
+    pub champion_name: String,
+    pub is_bot: bool,
+    pub is_dead: bool,
+    pub items: Vec<Item>,
+    pub level: usize,
+    pub position: String, // TODO: Enum
+    pub raw_champion_name: String,
+    pub respawn_timer: f64,
+    pub runes: PartialRunes,
+    pub scores: Scores,
+    #[serde(rename = "skinID")]
+    pub skin_id: usize,
     #[softeq(uid)]
-    summoner_id: String,
-    summoner_level: i32,
-    summoner_name: String,
-    team_early_surrendered: bool,
-    team_id: i32,
-    /// Both individualPosition and teamPosition are computed by the game server and are different versions of the most likely position played by a player. The individualPosition is the best guess for which position the player actually played in isolation of anything else. The teamPosition is the best guess for which position the player actually played if we add the constrai32 that each team must have one top player, one jungle, one middle, etc. Generally the recommendation is to use the teamPosition field over the individualPosition field.
-    team_position: String,
-    time_c_cing_others: i32,
-    time_played: i32,
-    total_damage_dealt: i32,
-    total_damage_dealt_to_champions: i32,
-    total_damage_shielded_on_teammates: i32,
-    total_damage_taken: i32,
-    total_heal: i32,
-    total_heals_on_teammates: i32,
-    total_minions_killed: i32,
-    total_time_c_c_dealt: i32,
-    total_time_spent_dead: i32,
-    total_units_healed: i32,
-    triple_kills: i32,
-    true_damage_dealt: i32,
-    true_damage_dealt_to_champions: i32,
-    true_damage_taken: i32,
-    turret_kills: i32,
-    turret_takedowns: i32,
-    turrets_lost: i32,
-    unreal_kills: i32,
-    vision_score: i32,
-    vision_wards_bought_in_game: i32,
-    wards_killed: i32,
-    wards_placed: i32,
-    win: bool,
+    pub summoner_name: String,
+    pub summoner_spells: SummonerSpells,
+    pub team: Team,
+}
+
+// TODO
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Item {
+    // TODO
+    #[softeq(uid)]
+    pub item_id: usize,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct PerksDto {
-    stat_perks: PerkStatsDto,
-    styles: Vec<PerkStyleDto>,
+pub struct Scores {
+    pub assists: usize,
+    pub creep_score: usize,
+    pub deaths: usize,
+    pub kills: usize,
+    pub ward_score: f64, // TODO: why not usize ?
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct PerkStatsDto {
-    defense: i32,
-    flex: i32,
-    offense: i32,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PerkStyleDto {
-    #[softeq(uid)]
-    description: String,
-    selections: Vec<PerkStyleSelectionDto>,
-    style: i32,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PerkStyleSelectionDto {
-    #[softeq(uid)]
-    perk: i32,
-    var1: i32,
-    var2: i32,
-    var3: i32,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
-#[serde(rename_all = "camelCase")]
-pub struct TeamDto {
-    bans: Vec<BanDto>,
-    objectives: ObjectivesDto,
-    #[softeq(uid)]
-    team_id: i32,
-    win: bool,
-}
-
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
-#[serde(rename_all = "camelCase")]
-pub struct BanDto {
-    #[softeq(uid)]
-    pick_turn: i32,
-    champion_id: i32,
+pub struct SummonerSpells {
+    pub summoner_spell_one: SummonerSpell,
+    pub summoner_spell_two: SummonerSpell,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct ObjectivesDto {
-    baron: ObjectiveDto,
-    champion: ObjectiveDto,
-    dragon: ObjectiveDto,
-    inhibitor: ObjectiveDto,
-    rift_herald: ObjectiveDto,
-    tower: ObjectiveDto,
+pub struct SummonerSpell {
+    pub display_name: String,
+    pub raw_description: String,
+    pub raw_display_name: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "PascalCase")]
+pub struct Abilities {
+    pub passive: Ability,
+    pub q: Ability,
+    pub w: Ability,
+    pub e: Ability,
+    pub r: Ability,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
 #[serde(rename_all = "camelCase")]
-pub struct ObjectiveDto {
-    first: bool,
-    kills: i32,
+pub struct Ability {
+    pub ability_level: Option<u8>,
+    pub display_name: String,
+    pub id: String,
+    pub raw_description: String,
+    pub raw_display_name: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "camelCase")]
+pub struct ChampionStats {
+    pub ability_power: f64,
+    pub armor: f64,
+    pub armor_penetration_flat: f64,
+    pub attack_damage: f64,
+    pub attack_range: f64,
+    pub attack_speed: f64,
+    pub bonus_armor_penetration_percent: f64,
+    pub bonus_magic_penetration_percent: f64,
+    pub crit_chance: f64,
+    pub crit_damage: f64,
+    pub current_health: f64,
+    pub heal_shield_power: Option<f64>,
+    pub health_regen_rate: f64,
+    pub life_steal: f64,
+    pub magic_lethality: f64,
+    pub magic_penetration_flat: f64,
+    pub magic_penetration_percent: f64,
+    pub magic_resist: f64,
+    pub max_health: f64,
+    pub move_speed: f64,
+    pub omnivamp: Option<f64>,
+    pub physical_lethality: f64,
+    pub physical_vamp: Option<f64>,
+    pub resource_max: f64,
+    pub resource_regen_rate: f64,
+    pub resource_type: String, // TODO: Enum
+    pub resource_value: f64,
+    pub spell_vamp: f64,
+    pub tenacity: f64,
+}
+
+/// Runes for the active player
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "camelCase")]
+pub struct FullRunes {
+    pub general_runes: Vec<Rune>,
+    pub keystone: Rune,
+    pub primary_rune_tree: RuneTree,
+    pub secondary_rune_tree: RuneTree,
+    pub stat_runes: Vec<StatRunes>,
+}
+
+/// Runes for all the other players
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "camelCase")]
+pub struct PartialRunes {
+    pub keystone: Rune,
+    pub primary_rune_tree: RuneTree,
+    pub secondary_rune_tree: RuneTree,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Rune {
+    #[softeq(uid)]
+    pub id: u16,
+    pub display_name: String,
+    pub raw_description: String,
+    pub raw_display_name: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "camelCase")]
+pub struct RuneTree {
+    pub id: u16,
+    pub display_name: String,
+    pub raw_description: String,
+    pub raw_display_name: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
+#[serde(rename_all = "camelCase")]
+pub struct StatRunes {
+    #[softeq(uid)]
+    pub id: u16,
+    pub raw_description: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+pub struct GameData {
+    pub game_mode: GameMode,
+    pub game_time: f64,
+    pub map_name: String,
+    pub map_number: usize,
+    pub map_terrain: String, // TODO: Enum
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, SoftEq, Mutable)]
+#[serde(rename_all = "PascalCase")]
+pub struct Event {
+    #[softeq(uid)]
+    pub event_id: usize,
+    pub event_time: f64,
+    pub data: EventData,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "PascalCase")]
+pub struct Events {
+    pub events: Vec<Event>,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(tag = "EventName", rename_all = "PascalCase")]
+pub enum EventData {
+    GameStart,
+    GameEnd {
+        result: GameResult,
+    },
+    MinionsSpawning,
+    FirstBrick {
+        // TODO: what is it ?
+        killer_name: String,
+    },
+    FirstBlood {
+        recipient: String, // TODO: what is it ?
+    },
+    TurretKilled {
+        killer_name: String,
+        turret_killed: String, // TODO: what is it ?
+        assisters: Vec<String>,
+    },
+    InhibKilled {
+        killer_name: String,
+        inhib_killed: String, // TODO: what is it ?
+        assisters: Vec<String>,
+    },
+    InhibRespawningSoon {
+        inhib_respawning_soon: String, // TODO: what is it ?
+    },
+    InhibRespawned {
+        inhib_respawned: String, // TODO: what is it ?
+    },
+    DragonKill {
+        killer_name: String,
+        assisters: Vec<String>,
+        dragon_type: DragonType,
+        stolen: String, // TODO: bool
+    },
+    HeraldKill {
+        killer_name: String,
+        assisters: Vec<String>,
+        stolen: String, // TODO: bool
+    },
+    BaronKill {
+        killer_name: String,
+        assisters: Vec<String>,
+        stolen: String, // TODO: bool
+    },
+    ChampionKill {
+        killer_name: String,
+        victim_name: String,
+        assisters: Vec<String>,
+    },
+    Multikill {
+        killer_name: String,
+        kill_streak: u8,
+    },
+    Ace {
+        acer: String,
+        acing_team: Team,
+    },
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+pub enum GameResult {
+    Win,
+    Loss,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+pub enum DragonType {
+    Elder,
+    Earth,
+    Air,
+    Fire,
+    Water,
+    Hextech,
+    Chemtech,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum GameMode {
+    Classic,
+    Aram,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum Team {
+    Order,
+    Chaos,
 }
