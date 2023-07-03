@@ -9,11 +9,13 @@ pub mod models;
 pub mod routes;
 pub mod session_management;
 pub mod state;
+pub mod env;
 
 pub type AppState = rocket::State<Mutex<state::State>>;
 
 #[launch]
 async fn rocket() -> _ {
+    env::env_config();
 
     rocket::build()
         .manage(Mutex::new(state::State::default()))
