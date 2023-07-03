@@ -5,14 +5,15 @@ use rocket::{
     Request,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+
+use crate::lol_api::summoners::Puuid;
 
 const SESSION_COOKIE_NAME: &str = "session";
 const JWT_SECRET: &str = "best secret ever"; // TODO
 
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
-    pub uid: Uuid,
+    pub puuid: Puuid,
 }
 
 #[derive(Debug)]
@@ -53,12 +54,10 @@ impl UserSession {
             &EncodingKey::from_secret(JWT_SECRET.as_ref()),
         )
     }
-}
 
-impl Default for UserSession {
-    fn default() -> Self {
+    pub fn new(puuid: Puuid) -> Self {
         Self {
-            uid: Uuid::new_v4(),
+            puuid,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::game::{player::proxy::PlayerProxy, GameState};
+use crate::{game::{player::proxy::PlayerProxy, GameState}, lol_api::summoners::Puuid};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 pub struct State {
     pub games: HashMap<Uuid, Arc<RwLock<GameState>>>,
-    pub messages: Mutex<HashMap<Uuid, PlayerProxy>>,
+    pub messages: Mutex<HashMap<Puuid, PlayerProxy>>,
 }
 
 impl State {
@@ -25,9 +25,9 @@ impl State {
         (uid, self.get_game_by_id(uid).unwrap())
     }
 
-    pub async fn get_game_by_player(&self, uuid: Uuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
+    pub async fn get_game_by_player(&self, puuid: &Puuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
         for g in self.games.iter() {
-            if g.1.read().await.has_player(uuid) {
+            if g.1.read().await.has_player(puuid) {
                 return Some((*g.0, g.1.clone()));
             }
         }
@@ -39,15 +39,15 @@ impl State {
         self.games.get(&uuid).cloned()
     }
 
-    pub fn get_or_create_proxy(&self, uid: Uuid) -> PlayerProxy {
+    pub fn get_or_create_proxy(&self, puuid: &Puuid) -> PlayerProxy {
         let mut lock = self.messages.lock().unwrap();
 
-        if let std::collections::hash_map::Entry::Vacant(e) = lock.entry(uid) {
+        if let std::collections::hash_map::Entry::Vacant(e) = lock.entry(puuid.clone()) {
             let proxy = PlayerProxy::default();
             e.insert(proxy.clone());
             proxy
         } else {
-            lock.get(&uid).unwrap().clone()
+            lock.get(puuid).unwrap().clone()
         }
     }
 }

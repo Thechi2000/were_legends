@@ -1,18 +1,25 @@
 use self::error::Error;
 use crate::game::messages::Message;
+use crate::lol_api::summoners::Puuid;
 use crate::session_management::UserSession;
 use crate::AppState;
-use rocket::get;
+use rocket::{get, post};
 use rocket::serde::json::Json;
+use serde::Deserialize;
 
 pub mod error;
 pub mod game;
 
-#[get("/login")]
-pub async fn login(state: &AppState) -> Result<String, Error> {
+#[derive(Debug, Deserialize)]
+pub struct LoginForm {
+    puuid: Puuid,
+}
+
+#[post("/login", format="json", data="<login_form>")]
+pub async fn login(state: &AppState, login_form: Json<LoginForm>) -> Result<String, Error> {
     let state = state.lock().await;
-    let session = UserSession::default();
-    state.get_or_create_proxy(session.uid);
+    let session = UserSession::new(login_form.puuid.clone());
+    state.get_or_create_proxy(&session.puuid);
     session.encode().map_err(Error::from)
 }
 
@@ -24,7 +31,7 @@ pub async fn get_updates(
     let state = state.lock().await;
 
     let lock = state.messages.lock().unwrap();
-    let Some(messages_mutex) = lock.get(&session.uid) else {
+    let Some(messages_mutex) = lock.get(&session.puuid) else {
         return Err(Error::NotFound)
     };
 

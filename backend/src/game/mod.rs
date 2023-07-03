@@ -1,5 +1,6 @@
 use self::player::{proxy::PlayerProxy, Player};
 use crate::{
+    lol_api::{self, summoners::Puuid},
     models::{MatchDto, MatchDtoMutation},
     routes::error::Error,
 };
@@ -11,19 +12,18 @@ use tokio::sync::{
     mpsc::{Receiver, Sender},
     RwLock,
 };
-use uuid::Uuid;
 
 pub mod messages;
 pub mod player;
 
 pub enum GameEvent {
     MatchDtoMutation(MatchDtoMutation),
-    PlayerJoin(Uuid),
+    PlayerJoin { id: Puuid, name: String },
     GameStart,
 }
 
 pub struct GameState {
-    players: HashMap<Uuid, Player>,
+    players: HashMap<Puuid, Player>,
     data: RwLock<Option<MatchDto>>,
     event_queue: Sender<GameEvent>,
 }
@@ -42,16 +42,25 @@ impl GameState {
         state
     }
 
-    pub fn has_player(&self, uuid: Uuid) -> bool {
-        self.players.contains_key(&uuid)
+    pub fn has_player(&self, puuid: &Puuid) -> bool {
+        self.players.contains_key(puuid)
     }
 
-    pub async fn add_player(&mut self, uid: Uuid, proxy: PlayerProxy) -> Result<(), Error> {
+    pub async fn add_player(&mut self, puuid: Puuid, proxy: PlayerProxy) -> Result<(), Error> {
+        let player_name = lol_api::summoners::get_by_puuid(puuid.clone())
+            .await?
+            .game_name;
+
         if self.players.len() > 5 {
             Err(Error::MaxPlayerReached)
-        } else if let hash_map::Entry::Vacant(e) = self.players.entry(uid) {
+        } else if let hash_map::Entry::Vacant(e) = self.players.entry(puuid.clone()) {
             e.insert(Player::new(proxy));
-            self.event_queue.send(GameEvent::PlayerJoin(uid)).await?;
+            self.event_queue
+                .send(GameEvent::PlayerJoin {
+                    id: puuid,
+                    name: player_name,
+                })
+                .await?;
             Ok(())
         } else {
             Err(Error::AlreadyInGame)
@@ -62,11 +71,11 @@ impl GameState {
         loop {
             while let Some(event) = rx.recv().await {
                 match event {
-                    GameEvent::PlayerJoin(uid) => {
+                    GameEvent::PlayerJoin { name, .. } => {
                         for player in state.read().await.players.values() {
                             player
                                 .proxy
-                                .send_message(messages::Message::PlayerJoin(uid))
+                                .send_message(messages::Message::PlayerJoin { name: name.clone() })
                         }
                     }
                     _ => todo!(),

@@ -52,3 +52,11 @@ impl<T> From<tokio::sync::mpsc::error::SendError<T>> for Error {
         }
     }
 }
+
+impl From<reqwest::Error> for Error {
+    fn from(e: reqwest::Error) -> Self {
+        Self::Internal {
+            msg: format!("{:?}", e),
+        }
+    }
+}
