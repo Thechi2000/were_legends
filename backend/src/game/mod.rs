@@ -8,10 +8,12 @@ use std::{
     collections::{hash_map, HashMap},
     sync::Arc,
 };
+use serde::Serialize;
 use tokio::sync::{
     mpsc::{Receiver, Sender},
     RwLock,
 };
+use uuid::Uuid;
 
 pub mod messages;
 pub mod player;
@@ -22,16 +24,25 @@ pub enum GameEvent {
     GameStart,
 }
 
+#[derive(Debug, Serialize)]
+pub struct GameStatus {
+    uid: Uuid,
+    player_names: Vec<String>,
+    has_started: bool,
+}
+
 pub struct GameState {
+    uid: Uuid,
     players: HashMap<Puuid, Player>,
     data: RwLock<Option<MatchDto>>,
     event_queue: Sender<GameEvent>,
 }
 
 impl GameState {
-    pub fn new() -> Arc<RwLock<Self>> {
+    pub fn new(uid: Uuid) -> Arc<RwLock<Self>> {
         let (tx, rx) = tokio::sync::mpsc::channel(100);
         let state = Arc::new(RwLock::new(Self {
+            uid,
             players: Default::default(),
             data: Default::default(),
             event_queue: tx,
@@ -40,6 +51,14 @@ impl GameState {
         tokio::spawn(Self::listen_events(rx, state.clone()));
 
         state
+    }
+
+    pub async fn get_status(&self) -> GameStatus {
+        GameStatus {
+            uid: self.uid,
+            player_names: self.players.values().map(|p| p.name.clone()).collect(),
+            has_started: self.data.read().await.is_some(),
+        }
     }
 
     pub fn has_player(&self, puuid: &Puuid) -> bool {
@@ -54,7 +73,7 @@ impl GameState {
         if self.players.len() > 5 {
             Err(Error::MaxPlayerReached)
         } else if let hash_map::Entry::Vacant(e) = self.players.entry(puuid.clone()) {
-            e.insert(Player::new(proxy));
+            e.insert(Player::new(player_name.clone(), proxy));
             self.event_queue
                 .send(GameEvent::PlayerJoin {
                     id: puuid,

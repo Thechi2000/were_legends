@@ -21,7 +21,7 @@ impl State {
 
     pub fn create_game(&mut self) -> (Uuid, Arc<RwLock<GameState>>) {
         let uid = Uuid::new_v4();
-        self.games.insert(uid, GameState::new());
+        self.games.insert(uid, GameState::new(uid));
         (uid, self.get_game_by_id(uid).unwrap())
     }
 
