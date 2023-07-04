@@ -3,13 +3,13 @@
 use rocket::launch;
 use tokio::sync::Mutex;
 
+pub mod env;
 pub mod game;
 pub mod lol_api;
 pub mod models;
 pub mod routes;
 pub mod session_management;
 pub mod state;
-pub mod env;
 
 pub type AppState = rocket::State<Mutex<state::State>>;
 
@@ -26,7 +26,8 @@ async fn rocket() -> _ {
                 routes::login,
                 routes::game::get_game,
                 routes::game::create_game,
-                routes::game::join_game
+                routes::game::join_game,
+                routes::game::update_game,
             ],
         )
 }

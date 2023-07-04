@@ -6,4 +6,7 @@ pub enum Message {
     PlayerJoin{
         name: String,
     },
+    Debug { // TODO
+        value: String
+    }
 }

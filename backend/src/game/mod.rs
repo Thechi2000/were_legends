@@ -1,13 +1,15 @@
 use self::player::{proxy::PlayerProxy, Player};
 use crate::{
     lol_api::{self, summoners::Puuid},
-    routes::error::Error, models::{MergedGameDataMutation, MergedGameData},
+    models::{AllGameData, MergedGameData, MergedGameDataMutation},
+    routes::error::Error,
 };
+use mutable::Mutable;
+use serde::Serialize;
 use std::{
     collections::{hash_map, HashMap},
     sync::Arc,
 };
-use serde::Serialize;
 use tokio::sync::{
     mpsc::{Receiver, Sender},
     RwLock,
@@ -18,7 +20,7 @@ pub mod messages;
 pub mod player;
 
 pub enum GameEvent {
-    MatchDtoMutation(Box<MergedGameDataMutation>),
+    MatchDataMutation(Box<MergedGameDataMutation>),
     PlayerJoin { id: Puuid, name: String },
     GameStart,
 }
@@ -85,6 +87,22 @@ impl GameState {
         }
     }
 
+    pub async fn update_state(&mut self, data: AllGameData) {
+        let merged_game_data = MergedGameData::from(data);
+
+        let mut data = self.data.write().await;
+        if data.is_none() {
+            *data = Some(MergedGameData::default());
+        }
+
+        let mutations = data.as_mut().unwrap().update(merged_game_data);
+        for mutation in mutations {
+            self.event_queue
+                .send(GameEvent::MatchDataMutation(Box::new(mutation)))
+                .await;
+        }
+    }
+
     pub async fn listen_events(mut rx: Receiver<GameEvent>, state: Arc<RwLock<Self>>) {
         loop {
             while let Some(event) = rx.recv().await {
@@ -96,7 +114,14 @@ impl GameState {
                                 .send_message(messages::Message::PlayerJoin { name: name.clone() })
                         }
                     }
-                    _ => todo!(),
+                    GameEvent::MatchDataMutation(m) => {
+                        for player in state.read().await.players.values() {
+                            player
+                                .proxy
+                                .send_message(messages::Message::Debug { value: format!("{m:#?}") })
+                        }
+                    }
+                    _ => todo!()
                 }
             }
         }

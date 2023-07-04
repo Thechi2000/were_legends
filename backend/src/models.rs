@@ -3,7 +3,7 @@
 use mutable::{cmp::SoftEq, Mutable, SoftEq};
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, Default)]
 pub struct MergedGameData {
     pub all_players: Vec<MergedPlayerData>,
     pub events: Events,
@@ -105,10 +105,10 @@ pub struct PlayerData {
 
 // TODO
 #[derive(Deserialize, Debug, Clone, PartialEq, Mutable, SoftEq)]
-#[serde(rename_all = "camelCase")]
 pub struct Item {
     // TODO
     #[softeq(uid)]
+    #[serde(rename = "itemID")]
     pub item_id: usize,
 }
 
@@ -238,7 +238,8 @@ pub struct StatRunes {
     pub raw_description: String,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct GameData {
     pub game_mode: GameMode,
     pub game_time: f64,
@@ -251,12 +252,14 @@ pub struct GameData {
 #[serde(rename_all = "PascalCase")]
 pub struct Event {
     #[softeq(uid)]
+    #[serde(rename = "EventID")]
     pub event_id: usize,
     pub event_time: f64,
+    #[serde(flatten)]
     pub data: EventData,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct Events {
     pub events: Vec<Event>,
@@ -341,9 +344,10 @@ pub enum DragonType {
     Chemtech,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Mutable)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Mutable, Default)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum GameMode {
+    #[default]
     Classic,
     Aram,
 }
