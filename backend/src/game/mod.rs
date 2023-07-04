@@ -97,9 +97,13 @@ impl GameState {
 
         let mutations = data.as_mut().unwrap().update(merged_game_data);
         for mutation in mutations {
-            self.event_queue
+            if let Err(e) = self
+                .event_queue
                 .send(GameEvent::MatchDataMutation(Box::new(mutation)))
-                .await;
+                .await
+            {
+                tracing::error!("Could not send mutation to event queue: {e}")
+            }
         }
     }
 
@@ -116,12 +120,12 @@ impl GameState {
                     }
                     GameEvent::MatchDataMutation(m) => {
                         for player in state.read().await.players.values() {
-                            player
-                                .proxy
-                                .send_message(messages::Message::Debug { value: format!("{m:#?}") })
+                            player.proxy.send_message(messages::Message::Debug {
+                                value: format!("{m:#?}"),
+                            })
                         }
                     }
-                    _ => todo!()
+                    _ => todo!(),
                 }
             }
         }
