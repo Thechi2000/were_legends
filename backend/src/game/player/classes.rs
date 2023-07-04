@@ -1,6 +1,6 @@
 use mutable::Mutable;
 
-use crate::models::MergedGameData;
+use crate::{models::MergedGameData, game::team_builder::Role};
 
 use super::Player;
 
@@ -13,6 +13,12 @@ impl PlayerClass {
         _game_data: &Option<MergedGameData>,
         _player: &Player,
     ) {
+        todo!()
+    }
+}
+
+impl From<Role> for PlayerClass {
+    fn from(value: Role) -> Self {
         todo!()
     }
 }

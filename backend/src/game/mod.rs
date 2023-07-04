@@ -18,6 +18,7 @@ use uuid::Uuid;
 
 pub mod messages;
 pub mod player;
+pub mod team_builder;
 
 pub enum GameEvent {
     MatchDataMutation(Box<MergedGameDataMutation>),
