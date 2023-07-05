@@ -6,7 +6,7 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{lol_api::summoners::Puuid, env::env_config};
+use crate::{env::env_config, lol_api::summoners::Puuid};
 
 const SESSION_COOKIE_NAME: &str = "session";
 

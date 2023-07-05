@@ -5,9 +5,11 @@ use super::Class;
 #[derive(Default, Debug)]
 pub struct SuperHero {}
 impl Class for SuperHero {
-    fn init(&self,
+    fn init(
+        &self,
         _game_data: &crate::models::MergedGameData,
-        _player: &crate::game::player::Player,) -> Result<(), crate::routes::error::Error> {
+        _player: &crate::game::player::Player,
+    ) -> Result<(), crate::routes::error::Error> {
         Ok(())
     }
 
@@ -26,5 +28,5 @@ impl Class for SuperHero {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all="snake_case")]
-pub struct SuperHeroState ;
+#[serde(rename_all = "snake_case")]
+pub struct SuperHeroState;

@@ -71,12 +71,14 @@ impl Class for Bot {
     }
 
     fn state(&self) -> super::PlayerState {
-        PlayerState::Bot(BotState { mission: self.state.lock().unwrap().mission.clone() })
-    }   
+        PlayerState::Bot(BotState {
+            mission: self.state.lock().unwrap().mission.clone(),
+        })
+    }
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all="snake_case")]
+#[serde(rename_all = "snake_case")]
 pub struct BotState {
-    mission: Option<Mission>
+    mission: Option<Mission>,
 }

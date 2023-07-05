@@ -1,4 +1,7 @@
-use crate::{game::{player::proxy::PlayerProxy, GameState}, lol_api::summoners::Puuid};
+use crate::{
+    game::{player::proxy::PlayerProxy, GameState},
+    lol_api::summoners::Puuid,
+};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -25,7 +28,10 @@ impl State {
         (uid, self.get_game_by_id(uid).unwrap())
     }
 
-    pub async fn get_game_by_player(&self, puuid: &Puuid) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
+    pub async fn get_game_by_player(
+        &self,
+        puuid: &Puuid,
+    ) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
         for g in self.games.iter() {
             if g.1.read().await.has_player(puuid) {
                 return Some((*g.0, g.1.clone()));

@@ -1,7 +1,7 @@
 use rocket::{get, post, serde::json::Json};
 use uuid::Uuid;
 
-use crate::{game::GameStatus, session_management::UserSession, AppState, models::AllGameData};
+use crate::{game::GameStatus, models::AllGameData, session_management::UserSession, AppState};
 
 use super::error::Error;
 
@@ -51,10 +51,17 @@ pub async fn join_game(player: UserSession, state: &AppState, uid: Uuid) -> Resu
     Ok(())
 }
 
-#[post("/game/update", format="json", data="<data>")]
-pub async fn update_game(player: UserSession, state: &AppState, data: Json<AllGameData>) -> Result<(), Error>{
+#[post("/game/update", format = "json", data = "<data>")]
+pub async fn update_game(
+    player: UserSession,
+    state: &AppState,
+    data: Json<AllGameData>,
+) -> Result<(), Error> {
     let lock = state.lock().await;
-    let game = lock.get_game_by_player(&player.puuid).await.ok_or(Error::NotInGame)?;
+    let game = lock
+        .get_game_by_player(&player.puuid)
+        .await
+        .ok_or(Error::NotInGame)?;
     drop(lock);
 
     game.1.write().await.update_state(data.into_inner()).await;

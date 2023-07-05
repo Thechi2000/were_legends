@@ -8,8 +8,13 @@ use crate::{
 };
 
 use self::{
-    bot::{Bot, BotState}, crook::{Crook, CrookState}, impostor::{Impostor, ImpostorState}, kamikaze::{Kamikaze, KamikazeState}, romeo::{Romeo, RomeoState},
-    super_hero::{SuperHero, SuperHeroState}, two_face::{TwoFace, TwoFaceState},
+    bot::{Bot, BotState},
+    crook::{Crook, CrookState},
+    impostor::{Impostor, ImpostorState},
+    kamikaze::{Kamikaze, KamikazeState},
+    romeo::{Romeo, RomeoState},
+    super_hero::{SuperHero, SuperHeroState},
+    two_face::{TwoFace, TwoFaceState},
 };
 
 use super::Player;
@@ -33,7 +38,7 @@ pub enum PlayerClass {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all="snake_case", tag="class")]
+#[serde(rename_all = "snake_case", tag = "class")]
 pub enum PlayerState {
     SuperHero(SuperHeroState),
     Impostor(ImpostorState),

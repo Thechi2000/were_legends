@@ -1,6 +1,6 @@
 use serde::{de::DeserializeOwned, Deserialize};
 
-use crate::{routes::error::Error, env::env_config};
+use crate::{env::env_config, routes::error::Error};
 
 pub mod summoners;
 
