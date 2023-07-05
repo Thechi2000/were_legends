@@ -1,4 +1,5 @@
 use mutable::default_impl::VecMutation;
+use serde::Serialize;
 
 use crate::{
     game::team_builder::Role,
@@ -7,8 +8,8 @@ use crate::{
 };
 
 use self::{
-    bot::Bot, crook::Crook, impostor::Impostor, kamikaze::Kamikaze, romeo::Romeo,
-    super_hero::SuperHero, two_face::TwoFace,
+    bot::{Bot, BotState}, crook::{Crook, CrookState}, impostor::{Impostor, ImpostorState}, kamikaze::{Kamikaze, KamikazeState}, romeo::{Romeo, RomeoState},
+    super_hero::{SuperHero, SuperHeroState}, two_face::{TwoFace, TwoFaceState},
 };
 
 use super::Player;
@@ -31,6 +32,18 @@ pub enum PlayerClass {
     Bot(Bot),
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all="snake_case", tag="class")]
+pub enum PlayerState {
+    SuperHero(SuperHeroState),
+    Impostor(ImpostorState),
+    Crook(CrookState),
+    Kamikaze(KamikazeState),
+    Romeo(RomeoState),
+    TwoFace(TwoFaceState),
+    Bot(BotState),
+}
+
 trait Class {
     fn init(
         &self,
@@ -43,6 +56,7 @@ trait Class {
         game_data: &MergedGameData,
         player: &Player,
     ) -> Result<(), Error>;
+    fn state(&self) -> PlayerState;
 }
 
 impl PlayerClass {
@@ -72,6 +86,10 @@ impl PlayerClass {
             }
             m => self.inner().update(m, game_data, player),
         }
+    }
+
+    pub fn get_state(&self) -> PlayerState {
+        self.inner().state()
     }
 }
 

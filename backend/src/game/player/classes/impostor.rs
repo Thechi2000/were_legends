@@ -1,5 +1,6 @@
-use super::Class;
+use serde::Serialize;
 
+use super::Class;
 
 #[derive(Default, Debug)]
 pub struct Impostor {}
@@ -19,4 +20,14 @@ impl Class for Impostor {
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())
     }
+
+
+
+    fn state(&self) -> super::PlayerState {
+        super::PlayerState::Impostor(ImpostorState)
+    }
 }
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all="snake_case")]
+pub struct ImpostorState;

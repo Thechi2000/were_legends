@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use super::Class;
 
 #[derive(Default, Debug)]
@@ -17,4 +19,12 @@ impl Class for SuperHero {
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())
     }
+
+    fn state(&self) -> super::PlayerState {
+        super::PlayerState::SuperHero(SuperHeroState)
+    }
 }
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all="snake_case")]
+pub struct SuperHeroState ;

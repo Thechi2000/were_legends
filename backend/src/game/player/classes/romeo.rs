@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use rand::{seq::IteratorRandom, thread_rng};
+use serde::Serialize;
 
 use crate::{game::messages::Message, routes::error::Error};
 
@@ -49,4 +50,16 @@ impl Class for Romeo {
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())
     }
+
+    fn state(&self) -> super::PlayerState {
+        super::PlayerState::Romeo(RomeoState {
+            juliette: self.state.lock().unwrap().juliette.clone(),
+        })
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RomeoState {
+    juliette: String,
 }

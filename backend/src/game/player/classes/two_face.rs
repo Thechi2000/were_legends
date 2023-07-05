@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Uniform};
+use serde::Serialize;
 
 use crate::{
     game::messages::Message,
@@ -62,4 +63,16 @@ impl Class for TwoFace {
 
         Ok(())
     }
+
+    fn state(&self) -> super::PlayerState {
+        super::PlayerState::TwoFace(TwoFaceState {
+            inting: self.state.lock().unwrap().inting,
+        })
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct TwoFaceState {
+    inting: bool,
 }

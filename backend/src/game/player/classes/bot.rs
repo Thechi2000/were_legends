@@ -11,7 +11,7 @@ use crate::{
     routes::error::Error,
 };
 
-use super::Class;
+use super::{Class, PlayerState};
 
 #[derive(Debug, Rand, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -69,4 +69,14 @@ impl Class for Bot {
 
         Ok(())
     }
+
+    fn state(&self) -> super::PlayerState {
+        PlayerState::Bot(BotState { mission: self.state.lock().unwrap().mission.clone() })
+    }   
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all="snake_case")]
+pub struct BotState {
+    mission: Option<Mission>
 }
