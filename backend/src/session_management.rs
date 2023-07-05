@@ -40,7 +40,7 @@ impl<'r> FromRequest<'r> for UserSession {
                 Err(e) => Outcome::Failure((Status::BadRequest, UserSessionError::Invalid(e))),
             }
         } else {
-            Outcome::Failure((Status::Forbidden, UserSessionError::Missing))
+            Outcome::Forward(())
         }
     }
 }

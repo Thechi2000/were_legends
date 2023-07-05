@@ -1,4 +1,4 @@
-use self::player::{proxy::PlayerProxy, Player};
+use self::player::{classes::PlayerState, proxy::PlayerProxy, Player};
 use crate::{
     lol_api::{self, summoners::Puuid},
     models::{AllGameData, MergedGameData, MergedGameDataMutation},
@@ -33,6 +33,14 @@ pub struct GameStatus {
     has_started: bool,
 }
 
+#[derive(Debug, Serialize)]
+pub struct AuthenticatedGameStatus {
+    uid: Uuid,
+    player_names: Vec<String>,
+    has_started: bool,
+    player_state: Option<PlayerState>,
+}
+
 pub struct GameState {
     uid: Uuid,
     players: HashMap<Puuid, Player>,
@@ -61,6 +69,18 @@ impl GameState {
             player_names: self.players.values().map(|p| p.name.clone()).collect(),
             has_started: self.data.read().await.is_some(),
         }
+    }
+
+    pub async fn get_status_authenticated(
+        &self,
+        puuid: &Puuid,
+    ) -> Result<AuthenticatedGameStatus, Error> {
+        Ok(AuthenticatedGameStatus {
+            uid: self.uid,
+            player_names: self.players.values().map(|p| p.name.clone()).collect(),
+            has_started: self.data.read().await.is_some(),
+            player_state: self.players.get(puuid).ok_or(Error::Unauthorized)?.state(),
+        })
     }
 
     pub fn has_player(&self, puuid: &Puuid) -> bool {

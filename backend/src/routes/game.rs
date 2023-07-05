@@ -1,11 +1,36 @@
 use rocket::{get, post, serde::json::Json};
 use uuid::Uuid;
 
-use crate::{game::GameStatus, models::AllGameData, session_management::UserSession, AppState};
+use crate::{
+    game::{AuthenticatedGameStatus, GameStatus},
+    models::AllGameData,
+    session_management::UserSession,
+    AppState,
+};
 
 use super::error::Error;
 
-#[get("/game/<uid>")]
+#[get("/game/<uid>", rank = 0)]
+pub async fn get_game_authenticated(
+    player: UserSession,
+    state: &AppState,
+    uid: Uuid,
+) -> Result<Json<AuthenticatedGameStatus>, Error> {
+    Ok(Json(
+        state
+            .lock()
+            .await
+            .games
+            .get(&uid)
+            .ok_or(Error::NotFound)?
+            .read()
+            .await
+            .get_status_authenticated(&player.puuid)
+            .await?,
+    ))
+}
+
+#[get("/game/<uid>", rank = 1)]
 pub async fn get_game(state: &AppState, uid: Uuid) -> Result<Json<GameStatus>, Error> {
     Ok(Json(
         state

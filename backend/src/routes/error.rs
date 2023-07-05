@@ -9,6 +9,7 @@ use std::{fmt::Debug, io::Cursor};
 #[derive(Serialize, Debug)]
 #[serde(tag = "error")]
 pub enum Error {
+    Unauthorized,
     NotFound,
     NotInGame,
     AlreadyInGame,
@@ -24,6 +25,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::AlreadyInGame => Status::BadRequest,
             Error::NotInGame => Status::BadRequest,
             Error::MaxPlayerReached => Status::BadRequest,
+            Error::Unauthorized => Status::Forbidden,
         };
         let Ok(body) = serde_json::to_string(&self) else {
             return Err(Status::InternalServerError)

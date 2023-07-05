@@ -1,4 +1,4 @@
-use self::{classes::PlayerClass, proxy::PlayerProxy};
+use self::{classes::{PlayerClass, PlayerState}, proxy::PlayerProxy};
 
 pub mod classes;
 pub mod proxy;
@@ -16,5 +16,9 @@ impl Player {
             proxy,
             name,
         }
+    }
+
+    pub fn state(&self) -> Option<PlayerState> {
+        self.class.as_ref().map(|c| c.get_state())
     }
 }
