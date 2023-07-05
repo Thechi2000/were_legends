@@ -10,8 +10,10 @@ use crate::{env::env_config, lol_api::summoners::Puuid};
 
 const SESSION_COOKIE_NAME: &str = "session";
 
+/// Guard for the user's session
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
+    /// Puuid of the user (may be replaced)
     pub puuid: Puuid,
 }
 
@@ -46,6 +48,7 @@ impl<'r> FromRequest<'r> for UserSession {
 }
 
 impl UserSession {
+    /// Creates an encoded string for this session, using the secret stored in JWT_SECRET
     pub fn encode(&self) -> Result<String, jsonwebtoken::errors::Error> {
         jsonwebtoken::encode(
             &Header::default(),

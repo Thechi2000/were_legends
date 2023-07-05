@@ -2,6 +2,7 @@ use serde::Serialize;
 
 use super::player::classes::bot::Mission;
 
+/// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]
 pub enum Message {
     Hi,

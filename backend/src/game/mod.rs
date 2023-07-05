@@ -26,6 +26,7 @@ pub enum GameEvent {
     GameStart,
 }
 
+/// Public status of a game
 #[derive(Debug, Serialize)]
 pub struct GameStatus {
     uid: Uuid,
@@ -33,6 +34,7 @@ pub struct GameStatus {
     has_started: bool,
 }
 
+/// Public status of a game, augmented with the state of the player
 #[derive(Debug, Serialize)]
 pub struct AuthenticatedGameStatus {
     uid: Uuid,
@@ -41,6 +43,7 @@ pub struct AuthenticatedGameStatus {
     player_state: Option<PlayerState>,
 }
 
+/// State of a game
 pub struct GameState {
     uid: Uuid,
     players: HashMap<Puuid, Player>,
@@ -63,6 +66,7 @@ impl GameState {
         state
     }
 
+    /// Returns the public status of the game
     pub async fn get_status(&self) -> GameStatus {
         GameStatus {
             uid: self.uid,
@@ -71,6 +75,9 @@ impl GameState {
         }
     }
 
+    /// Returns the public status of the game, along with the status of one player
+    /// 
+    /// - puuid: Puuid of the player of which the status is requested
     pub async fn get_status_authenticated(
         &self,
         puuid: &Puuid,
@@ -83,10 +90,15 @@ impl GameState {
         })
     }
 
+    /// Returns whether the player with the given uuid is currently in this game
     pub fn has_player(&self, puuid: &Puuid) -> bool {
         self.players.contains_key(puuid)
     }
 
+    /// Add a player to this game
+    /// 
+    /// - puuid: Puuid of the player to add
+    /// - proxy: Proxy of the player to communicate messages
     pub async fn add_player(&mut self, puuid: Puuid, proxy: PlayerProxy) -> Result<(), Error> {
         let player_name = lol_api::summoners::get_by_puuid(puuid.clone())
             .await?
@@ -108,6 +120,7 @@ impl GameState {
         }
     }
 
+    /// Update the state of the game with data from the LoL Client API
     pub async fn update_state(&mut self, data: AllGameData) {
         let merged_game_data = MergedGameData::from(data);
 
@@ -128,7 +141,8 @@ impl GameState {
         }
     }
 
-    pub async fn listen_events(mut rx: Receiver<GameEvent>, state: Arc<RwLock<Self>>) {
+    /// Background task listening and processing events
+    async fn listen_events(mut rx: Receiver<GameEvent>, state: Arc<RwLock<Self>>) {
         loop {
             while let Some(event) = rx.recv().await {
                 match event {

@@ -12,6 +12,12 @@ pub enum Role {
     Bot,
 }
 
+/// Generates a random composition for a game
+/// 
+/// The composition will contain:
+/// - One SuperHero
+/// - One Impostor and or one Crook
+/// - Two to three other roles, to fill up to five roles
 pub fn generate_composition() -> Vec<Role> {
     let mut roles = vec![SuperHero];
 
