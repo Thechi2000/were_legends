@@ -6,7 +6,7 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{env::env_config, lol_api::summoners::Puuid};
+use crate::env::env_config;
 
 const SESSION_COOKIE_NAME: &str = "session";
 
@@ -14,7 +14,8 @@ const SESSION_COOKIE_NAME: &str = "session";
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
     /// Puuid of the user (may be replaced)
-    pub puuid: Puuid,
+    pub name: String,
+    pub summoner_name: Option<String>,
 }
 
 #[derive(Debug)]
@@ -57,8 +58,11 @@ impl UserSession {
         )
     }
 
-    pub fn new(puuid: Puuid) -> Self {
-        Self { puuid }
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            summoner_name: None,
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 use self::error::Error;
 use crate::game::messages::Message;
-use crate::lol_api::summoners::Puuid;
 use crate::session_management::UserSession;
 use crate::AppState;
 use rocket::http::CookieJar;
@@ -13,7 +12,7 @@ pub mod game;
 
 #[derive(Debug, Deserialize)]
 pub struct LoginForm {
-    puuid: Puuid,
+    name: String,
 }
 
 #[post("/login", format = "json", data = "<login_form>")]
@@ -23,8 +22,8 @@ pub async fn login(
     cookies: &CookieJar<'_>,
 ) -> Result<(), Error> {
     let state = state.lock().await;
-    let session = UserSession::new(login_form.puuid.clone());
-    state.get_or_create_proxy(&session.puuid);
+    let session = UserSession::new(login_form.name.clone());
+    state.get_or_create_proxy(&session.name);
 
     cookies.add(session.try_into().map_err(Error::from)?);
 
@@ -39,7 +38,7 @@ pub async fn get_updates(
     let state = state.lock().await;
 
     let lock = state.messages.lock().unwrap();
-    let Some(messages_mutex) = lock.get(&session.puuid) else {
+    let Some(messages_mutex) = lock.get(&session.name) else {
         return Err(Error::NotFound)
     };
 

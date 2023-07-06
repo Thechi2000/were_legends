@@ -1,6 +1,5 @@
 use self::player::{classes::PlayerState, proxy::PlayerProxy, Player};
 use crate::{
-    lol_api::{self, summoners::Puuid},
     models::{AllGameData, MergedGameData, MergedGameDataMutation},
     routes::error::Error,
 };
@@ -22,7 +21,7 @@ pub mod team_builder;
 
 pub enum GameEvent {
     MatchDataMutation(Box<MergedGameDataMutation>),
-    PlayerJoin { id: Puuid, name: String },
+    PlayerJoin { name: String },
     GameStart,
 }
 
@@ -46,7 +45,7 @@ pub struct AuthenticatedGameStatus {
 /// State of a game
 pub struct GameState {
     uid: Uuid,
-    players: HashMap<Puuid, Player>,
+    players: HashMap<String, Player>,
     data: RwLock<Option<MergedGameData>>,
     event_queue: Sender<GameEvent>,
 }
@@ -76,11 +75,11 @@ impl GameState {
     }
 
     /// Returns the public status of the game, along with the status of one player
-    /// 
+    ///
     /// - puuid: Puuid of the player of which the status is requested
     pub async fn get_status_authenticated(
         &self,
-        puuid: &Puuid,
+        puuid: &String,
     ) -> Result<AuthenticatedGameStatus, Error> {
         Ok(AuthenticatedGameStatus {
             uid: self.uid,
@@ -90,29 +89,22 @@ impl GameState {
         })
     }
 
-    /// Returns whether the player with the given uuid is currently in this game
-    pub fn has_player(&self, puuid: &Puuid) -> bool {
-        self.players.contains_key(puuid)
+    /// Returns whether the player with the given name is currently in this game
+    pub fn has_player(&self, name: &String) -> bool {
+        self.players.contains_key(name)
     }
 
     /// Add a player to this game
-    /// 
-    /// - puuid: Puuid of the player to add
+    ///
+    /// - name: Name of the player to add
     /// - proxy: Proxy of the player to communicate messages
-    pub async fn add_player(&mut self, puuid: Puuid, proxy: PlayerProxy) -> Result<(), Error> {
-        let player_name = lol_api::summoners::get_by_puuid(puuid.clone())
-            .await?
-            .game_name;
-
+    pub async fn add_player(&mut self, name: String, proxy: PlayerProxy) -> Result<(), Error> {
         if self.players.len() > 5 {
             Err(Error::MaxPlayerReached)
-        } else if let hash_map::Entry::Vacant(e) = self.players.entry(puuid.clone()) {
-            e.insert(Player::new(player_name.clone(), proxy));
+        } else if let hash_map::Entry::Vacant(e) = self.players.entry(name.clone()) {
+            e.insert(Player::new(name.clone(), proxy));
             self.event_queue
-                .send(GameEvent::PlayerJoin {
-                    id: puuid,
-                    name: player_name,
-                })
+                .send(GameEvent::PlayerJoin { name })
                 .await?;
             Ok(())
         } else {
