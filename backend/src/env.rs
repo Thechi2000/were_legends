@@ -11,6 +11,9 @@ pub struct Config {
 
     #[envconfig(from = "JWT_SECRET")]
     pub jwt_secret: String,
+
+    #[envconfig(from = "BASE_URI", default = "/api")]
+    pub uri: String,
 }
 
 pub static CONFIG: OnceLock<Config> = OnceLock::new();

@@ -1,5 +1,6 @@
 #![allow(dead_code)] // TODO
 
+use env::env_config;
 use rocket::launch;
 use tokio::sync::Mutex;
 
@@ -20,7 +21,7 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(Mutex::new(state::State::default()))
         .mount(
-            "/",
+            &env_config().uri,
             rocket::routes![
                 routes::get_updates,
                 routes::login,
