@@ -9,10 +9,8 @@ import { useCookies } from "react-cookie";
 export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
 
-  console.log(JSON.stringify(session))
-
   return (
-    <div className="flex flex-col justify-items-center items-center gap-4 mt-10">
+    <div className="flex flex-col justify-items-center items-center gap-4 pt-10">
       <h1 className="font-rhuma-sinera text-9xl">Among Legends</h1>
       <h2 className="text-3xl">Who is the real inter ?</h2>
       <p>Hi {session ? session.name : ""}</p>

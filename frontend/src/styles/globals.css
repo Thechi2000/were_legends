@@ -1,10 +1,29 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-button {
-    border: solid 2px #444444;
-    border-radius: 0.5rem;
-    padding: 0.2rem 0.5rem;
-    background-color: #DDDDDDDD;
+.arrow-left {
+  width: 0;
+  height: 0;
+  border-bottom: 0.7rem solid transparent;
+  border-top: 0.7rem solid transparent;
+  border-right: 0.7rem solid rgb(125 211 252);
+}
+
+.arrow-right {
+  width: 0;
+  height: 0;
+  border-bottom: 0.7rem solid transparent;
+  border-top: 0.7rem solid transparent;
+  border-left: 0.7rem solid rgb(125 211 252);
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+
+  position: absolute;
+  top: 0;
+  left: 0;
 }

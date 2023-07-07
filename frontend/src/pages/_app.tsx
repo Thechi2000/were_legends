@@ -26,17 +26,22 @@ export default function MyApp({ Component, pageProps }: any) {
   }
 
   useEffect(() => {
-    setSession(getSessionJWT());
+    console.log("1")
+    var tmp = getSessionJWT();
+    setSession(tmp);
+    console.log(JSON.stringify(tmp))
   }, []);
 
   useEffect(() => {
+    console.log("2")
+    console.log(JSON.stringify(session))
     if (!session) {
       router.push('/login')
     }
   }, [session]);
 
   return (
-    <main>
+    <main className="bg-sky-600 h-screen text-slate-200">
       <style jsx global>{`
         html {
           --font-rhuma-sinera: ${TITLE_FONT.style.fontFamily};
