@@ -1,15 +1,22 @@
 import jwtDecode from "jwt-decode";
+import { Cookies } from "react-cookie";
 
 export interface Session {
   name: string;
   summoner_name: string | null;
 }
 
-export function decodeSession(token: string): Session {
+
+function getSessionToken(): string | null {
+  return new Cookies().get("session");
+}
+
+export function decodeSession(token: string | null): Session | null {
   return token
     ? (jwtDecode(token) as Session)
-    : {
-        name: "",
-        summoner_name: null,
-      };
+    : null;
+}
+
+export default function getSessionJWT(): Session | null {
+  return decodeSession(getSessionToken())
 }
