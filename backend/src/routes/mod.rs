@@ -2,7 +2,6 @@ use self::error::Error;
 use crate::game::messages::Message;
 use crate::session_management::UserSession;
 use crate::AppState;
-use rocket::http::CookieJar;
 use rocket::serde::json::Json;
 use rocket::{get, post};
 use serde::Deserialize;
@@ -16,18 +15,12 @@ pub struct LoginForm {
 }
 
 #[post("/login", format = "json", data = "<login_form>")]
-pub async fn login(
-    state: &AppState,
-    login_form: Json<LoginForm>,
-    cookies: &CookieJar<'_>,
-) -> Result<(), Error> {
+pub async fn login(state: &AppState, login_form: Json<LoginForm>) -> Result<String, Error> {
     let state = state.lock().await;
     let session = UserSession::new(login_form.name.clone());
     state.get_or_create_proxy(&session.name);
 
-    cookies.add(session.try_into().map_err(Error::from)?);
-
-    Ok(())
+    session.encode().map_err(Error::from)
 }
 
 #[get("/updates")]

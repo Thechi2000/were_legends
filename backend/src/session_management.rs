@@ -21,6 +21,7 @@ pub struct UserSession {
 #[derive(Debug)]
 pub enum UserSessionError {
     Missing,
+    BadFormat,
     Invalid(jsonwebtoken::errors::Error),
 }
 
@@ -29,13 +30,17 @@ impl<'r> FromRequest<'r> for UserSession {
     type Error = UserSessionError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if let Some(cookie) = req.cookies().get(SESSION_COOKIE_NAME) {
+        if let Some(header) = req.headers().get_one("Authorization") {
+            let Some(header) = header.strip_prefix("Bearer ") else {
+                return Outcome::Failure((Status::BadRequest, UserSessionError::BadFormat))
+            };
+
             let mut validation = Validation::default();
             validation.validate_exp = false;
             validation.required_spec_claims.clear();
 
             match jsonwebtoken::decode::<UserSession>(
-                cookie.value(),
+                header,
                 &DecodingKey::from_secret(env_config().jwt_secret.as_ref()),
                 &validation,
             ) {
