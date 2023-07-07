@@ -1,65 +1,40 @@
 import { create_game, login } from "@/api";
-import { decodeSession } from "@/session";
-import jwtDecode from "jwt-decode";
-import { cookies } from "next/dist/client/components/headers";
+import { Button } from "@/components/inputs";
+import getSessionJWT, { Session } from "@/session";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 
-export default function Home() {
-  var [name, setName] = useState("");
-  var [session, setSession] = useState(null as null | string);
-  var [cookies, setCookies, removeCookies] = useCookies(["session"]);
+export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
 
-  function refreshSession() {
-    setSession(cookies.session || null);
-  }
-
-  useEffect(() => {
-    refreshSession();
-  });
+  console.log(JSON.stringify(session))
 
   return (
-    <>
-      {session ? (
-        <>
-          <p>Hi {decodeSession(cookies.session).name}</p>
-          <button
-            onClick={() => {
-              removeCookies("session");
-              refreshSession();
-            }}
-          >
-            Log out
-          </button>
-          <button
-            onClick={() => {
-              create_game().then((uid) => {
-                if (uid) {
-                  router.push(`/game/${uid}`);
-                }
-              });
-            }}
-          >
-            Create game
-          </button>
-        </>
-      ) : (
-        <>
-          <p>Login:</p>
-          <input onChange={(e) => setName(e.target.value)} />
-          <button
-            onClick={async () => {
-              let token = await login(name);
-              setCookies("session", token);
-              refreshSession();
-            }}
-          >
-            Login
-          </button>
-        </>
-      )}
-    </>
+    <div className="flex flex-col justify-items-center items-center gap-4 mt-10">
+      <h1 className="font-rhuma-sinera text-9xl">Among Legends</h1>
+      <h2 className="text-3xl">Who is the real inter ?</h2>
+      <p>Hi {session ? session.name : ""}</p>
+      <Button
+        onClick={() => {
+          setSessionToken(null);
+        }}
+      >
+        Log out
+      </Button>
+      <Button
+        onClick={() => {
+          create_game().then((uid) => {
+            if (uid) {
+              router.push(`/game/${uid}`);
+            }
+          });
+        }}
+      >
+        Create game
+      </Button>
+      <Link href="/rules">Rules</Link>
+    </div>
   );
 }
