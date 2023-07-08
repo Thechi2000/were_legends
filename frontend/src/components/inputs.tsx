@@ -1,8 +1,14 @@
-export function Button({ className, ...props }: any) {
+export function Button({ children, className, ...props }: any) {
   return (
-    <div className={"flex justify-center items-center gap-2 border-2 border-sky-400 rounded-md p-1 " + className}>
+    <div
+      className={
+        "flex justify-center items-center gap-2 border-2 border-sky-400 rounded-md p-1 cursor-pointer " +
+        className
+      }
+      {...props}
+    >
       <i className="arrow-right" />
-      <button {...props}></button>
+      {children}
       <i className="arrow-left" />
     </div>
   );

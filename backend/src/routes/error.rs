@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::{fmt::Debug, io::Cursor};
 
 #[derive(Serialize, Debug)]
-#[serde(tag = "error")]
+#[serde(tag = "error", rename_all="SCREAMING_SNAKE_CASE")]
 pub enum Error {
     Unauthorized,
     NotFound,

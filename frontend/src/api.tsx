@@ -2,6 +2,10 @@ import Cookies from "universal-cookie";
 
 var API_ROOT = process.env["API_ROOT_URL"];
 
+export interface LoginResponse {
+  token: string
+}
+
 export interface GameState {
   uid: string;
   player_names: string[];
@@ -16,11 +20,16 @@ export interface PlayerState {
   mission?: string;
 }
 
+export interface ApiError {
+  error: string;
+  msg?: string;
+}
+
 function get_session_token(): string | null {
   return new Cookies().get("session");
 }
 
-export async function login(name: string): Promise<string> {
+export async function login(name: string): Promise<LoginResponse | ApiError> {
   let res = await fetch(`https://localhost/api/login`, {
     method: "POST",
     headers: {
@@ -28,7 +37,8 @@ export async function login(name: string): Promise<string> {
     },
     body: JSON.stringify({ name: name }),
   });
-  return res.text();
+  
+  return res.json();
 }
 
 export async function create_game(): Promise<string | null> {

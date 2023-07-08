@@ -10,7 +10,7 @@ const TITLE_FONT = localFont({
   src: "../../fonts/Rhuma Sinera Regular.ttf",
 });
 
-export default function MyApp({ Component, pageProps }: any) {
+export default function App({ Component, pageProps }: any) {
   var [cookies, setCookies, removeCookies] = useCookies(["session"]);
   const [session, setSession] = useState(null as Session | null);
   const router = useRouter();
@@ -26,17 +26,13 @@ export default function MyApp({ Component, pageProps }: any) {
   }
 
   useEffect(() => {
-    console.log("1")
     var tmp = getSessionJWT();
     setSession(tmp);
-    console.log(JSON.stringify(tmp))
   }, []);
 
   useEffect(() => {
-    console.log("2")
-    console.log(JSON.stringify(session))
-    if (!session) {
-      router.push('/login')
+    if (!session && Component.requireLogin) {
+      router.push("/login");
     }
   }, [session]);
 

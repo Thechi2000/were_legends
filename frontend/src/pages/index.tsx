@@ -36,3 +36,5 @@ export default function Home({ session, setSessionToken }: any) {
     </div>
   );
 }
+
+Home.requireLogin = true;

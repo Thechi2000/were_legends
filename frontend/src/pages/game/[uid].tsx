@@ -20,3 +20,5 @@ export default function Game() {
     </>
   );
 }
+
+Game.requireLogin = true;
