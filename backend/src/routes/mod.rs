@@ -4,7 +4,7 @@ use crate::session_management::UserSession;
 use crate::AppState;
 use rocket::serde::json::Json;
 use rocket::{get, post};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub mod error;
 pub mod game;
@@ -14,13 +14,29 @@ pub struct LoginForm {
     name: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct LoginResponse {
+    token: String,
+}
+
 #[post("/login", format = "json", data = "<login_form>")]
-pub async fn login(state: &AppState, login_form: Json<LoginForm>) -> Result<String, Error> {
+pub async fn login(
+    state: &AppState,
+    login_form: Json<LoginForm>,
+) -> Result<Json<LoginResponse>, Error> {
+    if login_form.name.is_empty() {
+        return Err(Error::InvalidName);
+    }
+
     let state = state.lock().await;
     let session = UserSession::new(login_form.name.clone());
+
     state.get_or_create_proxy(&session.name);
 
-    session.encode().map_err(Error::from)
+    session
+        .encode()
+        .map(|t| Json(LoginResponse { token: t }))
+        .map_err(Error::from)
 }
 
 #[get("/updates")]

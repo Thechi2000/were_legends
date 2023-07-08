@@ -14,6 +14,7 @@ pub enum Error {
     NotInGame,
     AlreadyInGame,
     MaxPlayerReached,
+    InvalidName,
     Internal { msg: String },
 }
 
@@ -26,6 +27,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::NotInGame => Status::BadRequest,
             Error::MaxPlayerReached => Status::BadRequest,
             Error::Unauthorized => Status::Forbidden,
+            Error::InvalidName => Status::BadRequest,
         };
         let Ok(body) = serde_json::to_string(&self) else {
             return Err(Status::InternalServerError)
