@@ -1,7 +1,7 @@
 import { ApiError, login } from "@/api";
 import { Button } from "@/components/inputs";
 import { useRouter } from "next/router";
-import { ComponentElement, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Login({ session, setSessionToken }: any) {
   const [name, setName] = useState("");
@@ -40,11 +40,11 @@ export default function Login({ session, setSessionToken }: any) {
     }
   }, [error]);
 
-    useEffect(() => {
-        if (nameInput.current) {
-        nameInput.current.focus();
-        }
-    }, []);
+  useEffect(() => {
+    if (nameInput.current) {
+      nameInput.current.focus();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-8 pb-20">

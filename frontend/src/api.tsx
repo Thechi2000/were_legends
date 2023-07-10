@@ -3,7 +3,7 @@ import Cookies from "universal-cookie";
 var API_ROOT = process.env["API_ROOT_URL"];
 
 export interface LoginResponse {
-  token: string
+  token: string;
 }
 
 export interface GameState {
@@ -37,7 +37,7 @@ export async function login(name: string): Promise<LoginResponse | ApiError> {
     },
     body: JSON.stringify({ name: name }),
   });
-  
+
   return res.json();
 }
 

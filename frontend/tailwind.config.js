@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)'],
-        "rhuma-sinera": ['var(--font-rhuma-sinera)'],
+        sans: ["var(--font-inter)"],
+        "rhuma-sinera": ["var(--font-rhuma-sinera)"],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

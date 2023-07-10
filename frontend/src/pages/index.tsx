@@ -1,10 +1,6 @@
 import { create_game, login } from "@/api";
 import { Button, Href } from "@/components/inputs";
-import getSessionJWT, { Session } from "@/session";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useCookies } from "react-cookie";
 
 export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
@@ -40,7 +36,9 @@ export default function Home({ session, setSessionToken }: any) {
       </div>
       <div className="flex flex-row gap-4">
         <p className="text-3xl">Check out the</p>
-        <Href arrowLeft className="text-3xl" href="/rules ">Rules</Href>
+        <Href arrowLeft className="text-3xl" href="/rules ">
+          Rules
+        </Href>
       </div>
     </div>
   );
