@@ -54,10 +54,19 @@ export type Response<T> =
   | { ok: true; value: T }
   | { ok: false; error?: ApiError };
 
-async function convertResponse<T>(res: globalThis.Response): Promise<Response<T>> {
-  return res.status == 200
-    ? { ok: true, value: (await res.json()) as T }
-    : { ok: false, error: await res.json() };
+async function convertResponse<T>(
+  res: globalThis.Response
+): Promise<Response<T>> {
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+    return res.status == 200
+      ? { ok: true, value: (await res.json()) as T }
+      : { ok: false, error: await res.json() };
+  } else {
+    return {
+      ok: false,
+    };
+  }
 }
 
 function get_session_token(): string | null {
@@ -106,6 +115,16 @@ export async function get_current_game(): Promise<Response<GameState>> {
   return await convertResponse(res);
 }
 
+export async function getUpdates(): Promise<Update[] | null> {
+  let res = await fetch(`https://localhost/api/updates`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${get_session_token()}`,
+    },
+  });
+  return res.status == 200 ? res.json() : null;
+}
+
 export function applyUpdate(state: GameState, update: Update): GameState {
   var cloned: GameState = JSON.parse(JSON.stringify(state));
 
@@ -145,14 +164,4 @@ export function applyUpdate(state: GameState, update: Update): GameState {
   }
 
   return cloned;
-}
-
-export async function getUpdates(): Promise<Update[] | null> {
-  let res = await fetch(`https://localhost/api/updates`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${get_session_token()}`,
-    },
-  });
-  return res.status == 200 ? res.json() : null;
 }
