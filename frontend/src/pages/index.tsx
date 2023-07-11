@@ -15,7 +15,7 @@ export default function Home({ session, setSessionToken }: any) {
   }, []);
 
   return (
-    <div className="h-full flex flex-col justify-center items-center gap-20 pb-20">
+    <div className="h-full flex flex-col justify-center items-center h-screen gap-20 pb-20">
       <div className="flex flex-col justify-center items-center">
         <h1 className="font-rhuma-sinera text-9xl">Among Legends</h1>
         <h2 className="text-5xl">Who is the real inter ?</h2>
