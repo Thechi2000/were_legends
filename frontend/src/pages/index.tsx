@@ -1,9 +1,18 @@
-import { create_game, login } from "@/api";
+import { create_game, get_current_game, login } from "@/api";
 import { Button, Href } from "@/components/inputs";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 
 export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
+
+  useEffect(() => {
+    get_current_game().then((res) => {
+      if (res.ok) {
+        router.push("/game");
+      }
+    });
+  }, []);
 
   return (
     <div className="h-full flex flex-col justify-center items-center gap-20 pb-20">

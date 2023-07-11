@@ -50,6 +50,16 @@ export interface ApiError {
   msg?: string;
 }
 
+export type Response<T> =
+  | { ok: true; value: T }
+  | { ok: false; error?: ApiError };
+
+async function convertResponse<T>(res: globalThis.Response): Promise<Response<T>> {
+  return res.status == 200
+    ? { ok: true, value: (await res.json()) as T }
+    : { ok: false, error: await res.json() };
+}
+
 function get_session_token(): string | null {
   return new Cookies().get("session");
 }
@@ -86,14 +96,14 @@ export async function get_game(uid: string): Promise<GameState | null> {
   return res.status == 200 ? res.json() : null;
 }
 
-export async function get_current_game(): Promise<GameState | null> {
+export async function get_current_game(): Promise<Response<GameState>> {
   let res = await fetch(`https://localhost/api/game`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${get_session_token()}`,
     },
   });
-  return res.status == 200 ? res.json() : null;
+  return await convertResponse(res);
 }
 
 export function applyUpdate(state: GameState, update: Update): GameState {

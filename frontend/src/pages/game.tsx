@@ -8,7 +8,13 @@ export default function Game() {
   const [game, setGame] = useState(null as GameState | null);
 
   useEffect(() => {
-    get_current_game().then((g) => setGame(g));
+    get_current_game().then((res) => {
+      if (res.ok) {
+        setGame(res.value);
+      } else {
+        router.push("/");
+      }
+    });
   }, []);
 
   useEffect(() => {
