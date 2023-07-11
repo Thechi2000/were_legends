@@ -20,6 +20,31 @@ export interface PlayerState {
   mission?: string;
 }
 
+export type Update =
+  | {
+      type: "hi";
+    }
+  | {
+      type: "player_join";
+      name: string;
+    }
+  | {
+      type: "role";
+      role: string;
+    }
+  | {
+      type: "mission";
+      mission: string;
+    }
+  | {
+      type: "juliette";
+      name: string;
+    }
+  | {
+      type: "two_face_state";
+      inting: boolean;
+    };
+
 export interface ApiError {
   error: string;
   msg?: string;
@@ -53,6 +78,67 @@ export async function create_game(): Promise<string | null> {
 
 export async function get_game(uid: string): Promise<GameState | null> {
   let res = await fetch(`https://localhost/api/game/${uid}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${get_session_token()}`,
+    },
+  });
+  return res.status == 200 ? res.json() : null;
+}
+
+export async function get_current_game(): Promise<GameState | null> {
+  let res = await fetch(`https://localhost/api/game`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${get_session_token()}`,
+    },
+  });
+  return res.status == 200 ? res.json() : null;
+}
+
+export function applyUpdate(state: GameState, update: Update): GameState {
+  var cloned: GameState = JSON.parse(JSON.stringify(state));
+
+  switch (update.type) {
+    case "hi":
+      break;
+
+    case "player_join":
+      if (cloned.player_names.indexOf(update.name) == -1) {
+        cloned.player_names.push(update.name);
+      }
+      break;
+
+    case "role":
+      cloned.player_state = {
+        class: update.role,
+      };
+      break;
+
+    case "mission":
+      if (cloned.player_state) {
+        cloned.player_state.mission = update.mission;
+      }
+      break;
+
+    case "juliette":
+      if (cloned.player_state) {
+        cloned.player_state.juliette = update.name;
+      }
+      break;
+
+    case "two_face_state":
+      if (cloned.player_state) {
+        cloned.player_state.inting = update.inting;
+      }
+      break;
+  }
+
+  return cloned;
+}
+
+export async function getUpdates(): Promise<Update[] | null> {
+  let res = await fetch(`https://localhost/api/updates`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${get_session_token()}`,

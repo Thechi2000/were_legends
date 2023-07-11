@@ -1,9 +1,10 @@
 use serde::Serialize;
 
-use super::player::classes::bot::Mission;
+use super::{player::classes::bot::Mission, team_builder::Role};
 
 /// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]
+#[serde(tag="type", rename_all="snake_case")]
 pub enum Message {
     Hi,
     PlayerJoin {
@@ -12,6 +13,9 @@ pub enum Message {
     Debug {
         // TODO
         value: String,
+    },
+    Role {
+        role: Role,
     },
     Mission {
         mission: Mission,

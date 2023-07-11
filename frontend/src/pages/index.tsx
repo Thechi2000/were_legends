@@ -17,7 +17,7 @@ export default function Home({ session, setSessionToken }: any) {
           onClick={() => {
             create_game().then((uid) => {
               if (uid) {
-                router.push(`/game/${uid}`);
+                router.push(`/game`);
               }
             });
           }}

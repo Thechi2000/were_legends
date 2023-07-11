@@ -10,7 +10,27 @@ use crate::{
 
 use super::error::Error;
 
-#[get("/game/<uid>", rank = 0)]
+#[get("/game", rank = 0)]
+pub async fn get_current_game_authenticated(
+    player: UserSession,
+    state: &AppState,
+) -> Result<Json<AuthenticatedGameStatus>, Error> {
+    Ok(Json(
+        state
+            .lock()
+            .await
+            .get_game_by_player(&player.name)
+            .await
+            .ok_or(Error::NotFound)?
+            .1
+            .read()
+            .await
+            .get_status_authenticated(&player.name)
+            .await?,
+    ))
+}
+
+#[get("/game/<uid>", rank = 1)]
 pub async fn get_game_authenticated(
     player: UserSession,
     state: &AppState,
@@ -30,7 +50,7 @@ pub async fn get_game_authenticated(
     ))
 }
 
-#[get("/game/<uid>", rank = 1)]
+#[get("/game/<uid>", rank = 2)]
 pub async fn get_game(state: &AppState, uid: Uuid) -> Result<Json<GameStatus>, Error> {
     Ok(Json(
         state
