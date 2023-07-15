@@ -1,6 +1,6 @@
 use crate::game::{player::proxy::PlayerProxy, GameState};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, hash_map::Entry},
     sync::{Arc, Mutex},
 };
 use tokio::sync::RwLock;
@@ -27,6 +27,16 @@ impl State {
         let uid = Uuid::new_v4();
         self.games.insert(uid, GameState::new(uid));
         (uid, self.get_game_by_id(uid).unwrap())
+    }
+
+    pub async fn try_remove_game(&mut self, uid: Uuid) {
+        let entry = self.games.entry(uid);
+
+        if let Entry::Occupied(e) = entry {
+            if e.get().read().await.player_count() == 0 {
+                e.remove_entry();
+            }
+        }
     }
 
     /// Returns the game in which the player is currently playing, if there is one

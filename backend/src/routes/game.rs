@@ -113,3 +113,16 @@ pub async fn update_game(
 
     Ok(())
 }
+
+#[post("/game/quit")]
+pub async fn quit_game(player: UserSession, state: &AppState) -> Result<(), Error> {
+    let game = state.lock().await
+        .get_game_by_player(&player.puuid)
+        .await
+        .ok_or(Error::NotInGame)?;
+
+    game.1.write().await.remove_player(player.puuid).await?;
+    state.lock().await.try_remove_game(game.0).await;
+
+    Ok(())
+}

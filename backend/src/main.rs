@@ -30,6 +30,7 @@ async fn rocket() -> _ {
                 routes::game::get_current_game_authenticated,
                 routes::game::create_game,
                 routes::game::join_game,
+                routes::game::quit_game,
                 routes::game::update_game,
             ],
         )

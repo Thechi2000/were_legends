@@ -95,6 +95,11 @@ impl GameState {
         self.players.contains_key(puuid)
     }
 
+    /// Returns the number of players in the game
+    pub fn player_count(&self) -> usize {
+        return self.players.len()
+    }
+
     /// Add a player to this game
     ///
     /// - puuid: Puuid of the player to add
@@ -117,6 +122,17 @@ impl GameState {
             Ok(())
         } else {
             Err(Error::AlreadyInGame)
+        }
+    }
+
+    /// Remove a player from this game
+    ///
+    /// - puuid: Puuid of the player to remove
+    pub async fn remove_player(&mut self, puuid: String) -> Result<(), Error> {
+        if let Some(_) = self.players.remove(&puuid) {
+            Ok(())
+        } else {
+            Err(Error::NotInGame)
         }
     }
 
