@@ -134,6 +134,16 @@ export async function startGame() {
     });
 }
 
+export async function quitGame() {
+    await fetch(`https://localhost/api/game/quit`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${get_session_token()}`,
+      },
+    });
+}
+
+
 export function applyUpdate(state: GameState, update: Update): GameState {
   var cloned: GameState = JSON.parse(JSON.stringify(state));
 

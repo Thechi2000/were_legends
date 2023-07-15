@@ -3,6 +3,7 @@ import {
   applyUpdate,
   getUpdates,
   get_current_game,
+  quitGame,
   startGame,
 } from "@/api";
 import { useRouter } from "next/router";
@@ -29,19 +30,35 @@ function PlayerInfo({ name }: { name?: string }) {
   );
 }
 
+function QuitButton({ refreshGame }: any) {
+  return (
+    <Button
+      onClick={() => {
+        quitGame().then(refreshGame);
+      }}
+      className="text-2xl py-2 max-w-fit"
+    >
+      Quit
+    </Button>
+  );
+}
+
 export default function Game() {
   const router = useRouter();
   const [game, setGame] = useState(null as GameState | null);
   const inviteLinkRef = useRef<HTMLParagraphElement>(null);
 
+  async function refreshGame() {
+    var res = await get_current_game();
+    if (res.ok) {
+      setGame(res.value);
+    } else {
+      router.push("/");
+    }
+  }
+
   useEffect(() => {
-    get_current_game().then((res) => {
-      if (res.ok) {
-        setGame(res.value);
-      } else {
-        router.push("/");
-      }
-    });
+    refreshGame();
   }, []);
 
   useEffect(() => {
@@ -115,12 +132,14 @@ export default function Game() {
           >
             Copy
           </button>
+          <QuitButton refreshGame={refreshGame} />
         </div>
       ) : (
-        <div>
+        <div className="flex flex-col gap-4 items-center">
           <Button onClick={startGame} className="text-4xl py-3">
             Start
           </Button>
+          <QuitButton refreshGame={refreshGame} />
         </div>
       )}
     </div>
