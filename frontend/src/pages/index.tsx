@@ -1,4 +1,4 @@
-import { create_game, get_current_game, login } from "@/api";
+import { createGame, getCurrentGame, login } from "@/api";
 import { Button, Href } from "@/components/inputs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
@@ -7,7 +7,7 @@ export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
 
   useEffect(() => {
-    get_current_game().then((res) => {
+    getCurrentGame().then((res) => {
       if (res.ok) {
         router.push("/game");
       }
@@ -24,7 +24,7 @@ export default function Home({ session, setSessionToken }: any) {
         <Button
           className="w-72 py-3"
           onClick={() => {
-            create_game().then((uid) => {
+            createGame().then((uid) => {
               if (uid) {
                 router.push(`/game`);
               }

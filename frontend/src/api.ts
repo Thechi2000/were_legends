@@ -69,7 +69,7 @@ async function convertResponse<T>(
   }
 }
 
-function get_session_token(): string | null {
+function getSessionToken(): string | null {
   return new Cookies().get("session");
 }
 
@@ -85,31 +85,31 @@ export async function login(name: string): Promise<LoginResponse | ApiError> {
   return res.json();
 }
 
-export async function create_game(): Promise<string | null> {
+export async function createGame(): Promise<string | null> {
   let res = await fetch(`https://localhost/api/game`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${get_session_token()}`,
+      Authorization: `Bearer ${getSessionToken()}`,
     },
   });
   return res.status == 200 ? res.json() : null;
 }
 
-export async function get_game(uid: string): Promise<GameState | null> {
+export async function getGame(uid: string): Promise<GameState | null> {
   let res = await fetch(`https://localhost/api/game/${uid}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${get_session_token()}`,
+      Authorization: `Bearer ${getSessionToken()}`,
     },
   });
   return res.status == 200 ? res.json() : null;
 }
 
-export async function get_current_game(): Promise<Response<GameState>> {
+export async function getCurrentGame(): Promise<Response<GameState>> {
   let res = await fetch(`https://localhost/api/game`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${get_session_token()}`,
+      Authorization: `Bearer ${getSessionToken()}`,
     },
   });
   return await convertResponse(res);
@@ -119,7 +119,7 @@ export async function getUpdates(): Promise<Update[] | null> {
   let res = await fetch(`https://localhost/api/updates`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${get_session_token()}`,
+      Authorization: `Bearer ${getSessionToken()}`,
     },
   });
   return res.status == 200 ? res.json() : null;
@@ -129,7 +129,7 @@ export async function startGame() {
     let res = await fetch(`https://localhost/api/game/start`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${get_session_token()}`,
+        Authorization: `Bearer ${getSessionToken()}`,
       },
     });
 }
@@ -138,7 +138,7 @@ export async function quitGame() {
     await fetch(`https://localhost/api/game/quit`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${get_session_token()}`,
+        Authorization: `Bearer ${getSessionToken()}`,
       },
     });
 }

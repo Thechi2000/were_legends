@@ -2,7 +2,7 @@ import {
   GameState,
   applyUpdate,
   getUpdates,
-  get_current_game,
+  getCurrentGame,
   quitGame,
   startGame,
 } from "@/api";
@@ -72,7 +72,7 @@ export default function Game({ data }: { data: RolesData }) {
   });
 
   async function refreshGame() {
-    var res = await get_current_game();
+    var res = await getCurrentGame();
     if (res.ok) {
       setGame(res.value);
     } else {
