@@ -67,8 +67,14 @@ trait Class {
 impl PlayerClass {
     fn inner(&self) -> &dyn Class {
         match self {
-            PlayerClass::Bot(bot) => bot,
-            _ => todo!(),
+            PlayerClass::Bot(i) => i,
+            PlayerClass::SuperHero(i) => i,
+            PlayerClass::Impostor(i) => i,
+            PlayerClass::Crook(i) => i,
+            PlayerClass::Kamikaze(i) => i,
+            PlayerClass::Romeo(i) => i,
+            PlayerClass::TwoFace(i) => i,
+            
         }
     }
 
