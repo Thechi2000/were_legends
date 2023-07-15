@@ -9,7 +9,7 @@ use super::Class;
 
 #[derive(Default, Debug)]
 struct State {
-    juliette: String,
+    juliette: Option<String>,
 }
 
 #[derive(Default, Debug)]
@@ -33,7 +33,7 @@ impl Class for Romeo {
                 msg: "Could not randomly choose juliette".into(),
             })?;
 
-        self.state.lock().unwrap().juliette = juliette.clone();
+        self.state.lock().unwrap().juliette = Some(juliette.clone());
 
         player.proxy.send_message(Message::Juliette {
             name: juliette.clone(),
@@ -61,5 +61,5 @@ impl Class for Romeo {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RomeoState {
-    juliette: String,
+    juliette: Option<String>,
 }
