@@ -27,7 +27,6 @@ pub mod team_builder;
 pub enum GameEvent {
     MatchDataMutation(Box<CurrentGameInfoMutation>),
     PlayerJoin { id: String, name: String },
-    GameStart,
 }
 
 /// Public status of a game
@@ -200,7 +199,6 @@ impl GameState {
                             }
                         }
                     }
-                    _ => todo!(),
                 }
             }
         }
