@@ -8,7 +8,7 @@ use crate::{
 };
 
 use self::{
-    bot::{Bot, BotState},
+    droid::{Droid, DroidState},
     crook::{Crook, CrookState},
     impostor::{Impostor, ImpostorState},
     kamikaze::{Kamikaze, KamikazeState},
@@ -19,7 +19,7 @@ use self::{
 
 use super::Player;
 
-pub mod bot;
+pub mod droid;
 pub mod crook;
 pub mod impostor;
 pub mod kamikaze;
@@ -34,7 +34,7 @@ pub enum PlayerClass {
     Kamikaze(Kamikaze),
     Romeo(Romeo),
     TwoFace(TwoFace),
-    Bot(Bot),
+    Droid(Droid),
 }
 
 #[derive(Debug, Serialize)]
@@ -46,7 +46,7 @@ pub enum PlayerState {
     Kamikaze(KamikazeState),
     Romeo(RomeoState),
     TwoFace(TwoFaceState),
-    Bot(BotState),
+    Droid(DroidState),
 }
 
 trait Class {
@@ -67,7 +67,7 @@ trait Class {
 impl PlayerClass {
     fn inner(&self) -> &dyn Class {
         match self {
-            PlayerClass::Bot(i) => i,
+            PlayerClass::Droid(i) => i,
             PlayerClass::SuperHero(i) => i,
             PlayerClass::Impostor(i) => i,
             PlayerClass::Crook(i) => i,
@@ -113,7 +113,7 @@ impl From<Role> for PlayerClass {
             Role::Kamikaze => PlayerClass::Kamikaze(Default::default()),
             Role::Romeo => PlayerClass::Romeo(Default::default()),
             Role::TwoFace => PlayerClass::TwoFace(Default::default()),
-            Role::Bot => PlayerClass::Bot(Default::default()),
+            Role::Droid => PlayerClass::Droid(Default::default()),
         }
     }
 }

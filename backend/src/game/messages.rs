@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use super::{player::classes::bot::Mission, team_builder::Role};
+use super::{player::classes::droid::Mission, team_builder::Role};
 
 /// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]

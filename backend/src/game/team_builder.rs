@@ -11,7 +11,7 @@ pub enum Role {
     Kamikaze,
     Romeo,
     TwoFace,
-    Bot,
+    Droid,
 }
 
 /// Generates a random composition for a game
@@ -32,7 +32,7 @@ pub fn generate_composition() -> Vec<Role> {
         }
     }
 
-    let other_roles = vec![Kamikaze, Romeo, TwoFace, Bot];
+    let other_roles = vec![Kamikaze, Romeo, TwoFace, Droid];
     let slice = other_roles
         .iter()
         .choose_multiple(&mut rand::thread_rng(), 5 - roles.len());

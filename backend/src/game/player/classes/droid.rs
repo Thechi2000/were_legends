@@ -26,11 +26,11 @@ struct State {
 }
 
 #[derive(Default, Debug)]
-pub struct Bot {
+pub struct Droid {
     state: Mutex<State>,
 }
 
-impl Class for Bot {
+impl Class for Droid {
     fn init(
         &self,
         _game_data: &crate::models::MergedGameData,
@@ -71,7 +71,7 @@ impl Class for Bot {
     }
 
     fn state(&self) -> super::PlayerState {
-        PlayerState::Bot(BotState {
+        PlayerState::Droid(DroidState {
             mission: self.state.lock().unwrap().mission.clone(),
         })
     }
@@ -79,6 +79,6 @@ impl Class for Bot {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub struct BotState {
+pub struct DroidState {
     mission: Option<Mission>,
 }
