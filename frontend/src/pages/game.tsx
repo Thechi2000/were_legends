@@ -6,10 +6,14 @@ import {
   quitGame,
   startGame,
 } from "@/api";
+import { promises as fs } from "fs";
 import { useRouter } from "next/router";
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ROOT_URL, sleep } from "@/utils";
 import { Button } from "@/components/inputs";
+import { RolesData } from "@/idata";
+import { RoleDisplay } from "@/components/roles";
+import path from "path";
 
 function PlayerInfo({ name }: { name?: string }) {
   return (
@@ -30,7 +34,7 @@ function PlayerInfo({ name }: { name?: string }) {
   );
 }
 
-export default function Game() {
+export default function Game({ data }: { data: RolesData }) {
   const router = useRouter();
   const [game, setGame] = useState(null as GameState | null);
   const inviteLinkRef = useRef<HTMLParagraphElement>(null);
@@ -121,7 +125,12 @@ export default function Game() {
   function Layout() {
     if (game) {
       if (game.player_state) {
-        return <p>{JSON.stringify(game.player_state)}</p>;
+        return (
+          <div className="flex flex-row items-center gap-40">
+            <PlayerInfos />
+            <RoleDisplay playerState={game.player_state} data={data} />
+          </div>
+        );
       } else if (game.player_names.length != 5) {
         return (
           <div className="flex flex-col gap-5 justify-center items-center">
@@ -170,6 +179,14 @@ export default function Game() {
       <Layout />
     </div>
   );
+}
+
+export async function getStaticProps() {
+  var buf = await fs.readFile(
+    path.join(process.cwd(), "data/roles.json"),
+    "utf8"
+  );
+  return { props: { data: JSON.parse(buf) } };
 }
 
 Game.requireLogin = true;

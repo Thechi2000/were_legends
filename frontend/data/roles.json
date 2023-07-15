@@ -1,0 +1,30 @@
+{
+  "super_hero": {
+    "name": "Super Hero",
+    "description": "You have to win the game, by any means. You need not to hide your role"
+  },
+  "impostor": {
+    "name": "Impostor",
+    "description": "You need to loose the game"
+  },
+  "crook": {
+    "name": "Crook",
+    "description": "You need to win the game, while tricking your allies into thinking that you are impostor"
+  },
+  "kamikaze": {
+    "name": "Kamikaze",
+    "description": "You must win, while having the most damage and deaths in you team"
+  },
+  "droid": {
+    "name": "Droid",
+    "description": "You will periodically receive missions that you must accomplish"
+  },
+  "two_face": {
+    "name": "TwoFace",
+    "description": "You a bipolar player, which will need to win or loose depending on the instruction you will receive"
+  },
+  "romeo": {
+    "name": "Romeo",
+    "description": "You fell in love with a player, and are not allowed to kill him. If he dies, you have a minute to get killed"
+  }
+}
