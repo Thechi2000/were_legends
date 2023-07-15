@@ -24,14 +24,9 @@ pub async fn login(
     state: &AppState,
     login_form: Json<LoginForm>,
 ) -> Result<Json<LoginResponse>, Error> {
-    if login_form.name.is_empty() {
-        return Err(Error::InvalidName);
-    }
-
     let state = state.lock().await;
-    let session = UserSession::new(login_form.name.clone());
-
-    state.get_or_create_proxy(&session.name);
+    let session = UserSession::new(login_form.name.clone()).await?;
+    state.get_or_create_proxy(&session.puuid);
 
     session
         .encode()
@@ -47,7 +42,7 @@ pub async fn get_updates(
     let state = state.lock().await;
 
     let lock = state.messages.lock().unwrap();
-    let Some(messages_mutex) = lock.get(&session.name) else {
+    let Some(messages_mutex) = lock.get(&session.puuid) else {
         return Err(Error::NotFound)
     };
 

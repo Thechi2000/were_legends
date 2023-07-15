@@ -6,16 +6,17 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::env::env_config;
+use crate::{env::env_config, lol_api::summoners::get_by_name, routes::error::Error};
 
 const SESSION_COOKIE_NAME: &str = "session";
 
 /// Guard for the user's session
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
-    /// Puuid of the user (may be replaced)
     pub name: String,
-    pub summoner_name: Option<String>,
+    pub puuid: String,
+    pub account_id: String,
+    pub summoner_id: String,
 }
 
 #[derive(Debug)]
@@ -63,11 +64,14 @@ impl UserSession {
         )
     }
 
-    pub fn new(name: String) -> Self {
-        Self {
+    pub async fn new(name: String) -> Result<Self, Error> {
+        let summoner = get_by_name(name.clone()).await.map_err(|_| Error::InvalidName)?;
+        Ok(Self {
             name,
-            summoner_name: None,
-        }
+            puuid: summoner.puuid,
+            account_id: summoner.account_id,
+            summoner_id: summoner.id,
+        })
     }
 }
 

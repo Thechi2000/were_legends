@@ -30,7 +30,7 @@ export default function Login({ session, setSessionToken }: any) {
     if (error) {
       switch (error.error) {
         case "INVALID_NAME":
-          setErrorInfo("Name must not be empty");
+          setErrorInfo("Invalid summoner name");
           break;
 
         default:
@@ -57,7 +57,7 @@ export default function Login({ session, setSessionToken }: any) {
               _login();
             }
           }}
-          placeholder="Name"
+          placeholder="Summoner name"
           className={
             "text-slate-800 border-solid rounded p-2 bg-slate-200 text-2xl " +
             (error && error.error == "INVALID_NAME"

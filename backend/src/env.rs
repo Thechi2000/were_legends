@@ -8,6 +8,8 @@ pub struct Config {
     pub lol_api_key: String,
     #[envconfig(from = "LOL_API_REGION", default = "europe")]
     pub lol_api_region: String,
+    #[envconfig(from = "LOL_API_SERVER", default = "euw1")]
+    pub lol_api_server: String,
 
     #[envconfig(from = "JWT_SECRET")]
     pub jwt_secret: String,

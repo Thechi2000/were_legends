@@ -1,6 +1,4 @@
-use crate::{
-    game::{player::proxy::PlayerProxy, GameState},
-};
+use crate::game::{player::proxy::PlayerProxy, GameState};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -34,10 +32,10 @@ impl State {
     /// Returns the game in which the player is currently playing, if there is one
     pub async fn get_game_by_player(
         &self,
-        name: &String,
+        puuid: &String,
     ) -> Option<(Uuid, Arc<RwLock<GameState>>)> {
         for g in self.games.iter() {
-            if g.1.read().await.has_player(name) {
+            if g.1.read().await.has_player(puuid) {
                 return Some((*g.0, g.1.clone()));
             }
         }
@@ -51,15 +49,15 @@ impl State {
     }
 
     /// Get the proxy for a player, or creates it if missing
-    pub fn get_or_create_proxy(&self, name: &String) -> PlayerProxy {
+    pub fn get_or_create_proxy(&self, puuid: &String) -> PlayerProxy {
         let mut lock = self.messages.lock().unwrap();
 
-        if let std::collections::hash_map::Entry::Vacant(e) = lock.entry(name.clone()) {
+        if let std::collections::hash_map::Entry::Vacant(e) = lock.entry(puuid.clone()) {
             let proxy = PlayerProxy::default();
             e.insert(proxy.clone());
             proxy
         } else {
-            lock.get(name).unwrap().clone()
+            lock.get(puuid).unwrap().clone()
         }
     }
 }

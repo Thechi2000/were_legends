@@ -2,6 +2,7 @@ use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::{env::env_config, routes::error::Error};
 
+pub mod account;
 pub mod summoners;
 
 #[derive(Deserialize, Debug)]
@@ -10,7 +11,11 @@ pub struct LolApiError {
     pub status_code: i32,
 }
 
-pub async fn make_api_call<T>(uri: String, parameters: &[(&str, &str)]) -> Result<T, Error>
+pub async fn make_api_call<T>(
+    uri: String,
+    parameters: &[(&str, &str)],
+    region: bool,
+) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
@@ -24,7 +29,11 @@ where
     let result: ApiResult<T> = reqwest::Client::new()
         .get(format!(
             "https://{}.api.riotgames.com{}",
-            env_config().lol_api_region.as_str(),
+            if region {
+                env_config().lol_api_region.as_str()
+            } else {
+                env_config().lol_api_server.as_str()
+            },
             uri
         ))
         .header("X-Riot-Token", env_config().lol_api_key.as_str())
