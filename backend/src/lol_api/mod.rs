@@ -3,6 +3,7 @@ use serde::{de::DeserializeOwned, Deserialize};
 use crate::{env::env_config, routes::error::Error};
 
 pub mod account;
+pub mod spectator;
 pub mod summoners;
 
 #[derive(Deserialize, Debug)]

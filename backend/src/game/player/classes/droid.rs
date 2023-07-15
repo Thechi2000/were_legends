@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::{
     game::messages::Message,
-    models::{GameDataMutation, MergedGameDataMutation},
+    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
     routes::error::Error,
 };
 
@@ -33,12 +33,12 @@ pub struct Droid {
 impl Class for Droid {
     fn init(
         &self,
-        _game_data: &crate::models::MergedGameData,
+        _game_data: &CurrentGameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         let mut lock = self.state.lock().unwrap();
 
-        lock.next_mission_timestamp = Normal::new(2.0, 0.5)
+        lock.next_mission_timestamp = Normal::new(120.0, 30.0)
             .map_err(Error::from)?
             .sample(&mut thread_rng());
 
@@ -47,16 +47,14 @@ impl Class for Droid {
 
     fn update(
         &self,
-        mutation: &crate::models::MergedGameDataMutation,
-        _game_data: &crate::models::MergedGameData,
+        mutation: &CurrentGameInfoMutation,
+        _game_data: &CurrentGameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        if let MergedGameDataMutation::GameData(GameDataMutation::GameTime((_, new_time))) =
-            mutation
-        {
+        if let CurrentGameInfoMutation::GameLength((_, new_time)) = mutation {
             let mut lock = self.state.lock().unwrap();
-            if lock.next_mission_timestamp <= *new_time {
-                lock.next_mission_timestamp += Normal::new(5.0, 1.0)
+            if lock.next_mission_timestamp <= *new_time as f64 {
+                lock.next_mission_timestamp += Normal::new(300.0, 60.0)
                     .map_err(Error::from)?
                     .sample(&mut thread_rng());
                 lock.mission = Some(thread_rng().gen());

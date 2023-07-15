@@ -12,5 +12,10 @@ pub struct SummonerByPuuid {
     pub tag_line: String,
 }
 pub async fn get_by_puuid(puuid: String) -> Result<SummonerByPuuid, Error> {
-    make_api_call(format!("/riot/account/v1/accounts/by-puuid/{puuid}"), &[], true).await
+    make_api_call(
+        format!("/riot/account/v1/accounts/by-puuid/{puuid}"),
+        &[],
+        true,
+    )
+    .await
 }

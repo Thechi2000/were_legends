@@ -1,4 +1,8 @@
-use crate::routes::error::Error;
+use crate::{
+    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    routes::error::Error,
+    session_management::UserSession,
+};
 
 use self::{
     classes::{PlayerClass, PlayerState},
@@ -13,16 +17,28 @@ pub mod proxy;
 pub struct Player {
     class: Option<PlayerClass>,
     pub proxy: PlayerProxy,
-    pub name: String,
+    pub session: UserSession,
 }
 
 impl Player {
-    pub fn new(name: String, proxy: PlayerProxy) -> Self {
+    pub fn new(session: UserSession, proxy: PlayerProxy) -> Self {
         Self {
             class: Default::default(),
             proxy,
-            name,
+            session,
         }
+    }
+
+    pub fn receive_mutation(
+        &self,
+        mutation: &CurrentGameInfoMutation,
+        game_data: &CurrentGameInfo,
+    ) -> Result<(), Error> {
+        if let Some(ref class) = self.class {
+            class.receive_mutation(&mutation, game_data, self)?;
+        }
+
+        Ok(())
     }
 
     pub fn state(&self) -> Option<PlayerState> {

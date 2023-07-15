@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation};
+
 use super::Class;
 
 #[derive(Default, Debug)]
@@ -7,7 +9,7 @@ pub struct SuperHero {}
 impl Class for SuperHero {
     fn init(
         &self,
-        _game_data: &crate::models::MergedGameData,
+        _game_data: &CurrentGameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())
@@ -15,8 +17,8 @@ impl Class for SuperHero {
 
     fn update(
         &self,
-        _mutation: &crate::models::MergedGameDataMutation,
-        _game_data: &crate::models::MergedGameData,
+        _mutation: &CurrentGameInfoMutation,
+        _game_data: &CurrentGameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())

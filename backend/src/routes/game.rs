@@ -3,7 +3,6 @@ use uuid::Uuid;
 
 use crate::{
     game::{AuthenticatedGameStatus, GameStatus},
-    models::AllGameData,
     session_management::UserSession,
     AppState,
 };
@@ -79,7 +78,7 @@ pub async fn create_game(player: UserSession, state: &AppState) -> Result<Json<U
 
     drop(lock);
 
-    game.write().await.add_player(player.puuid, proxy).await?;
+    game.write().await.add_player(player, proxy).await?;
 
     Ok(Json(uid))
 }
@@ -91,32 +90,16 @@ pub async fn join_game(player: UserSession, state: &AppState, uid: Uuid) -> Resu
     let game = lock.get_game_by_id(uid).ok_or(Error::NotFound)?;
     drop(lock);
 
-    game.write().await.add_player(player.puuid, proxy).await?;
-
-    Ok(())
-}
-
-#[post("/game/update", format = "json", data = "<data>")]
-pub async fn update_game(
-    player: UserSession,
-    state: &AppState,
-    data: Json<AllGameData>,
-) -> Result<(), Error> {
-    let lock = state.lock().await;
-    let game = lock
-        .get_game_by_player(&player.puuid)
-        .await
-        .ok_or(Error::NotInGame)?;
-    drop(lock);
-
-    game.1.write().await.update_state(data.into_inner()).await;
+    game.write().await.add_player(player, proxy).await?;
 
     Ok(())
 }
 
 #[post("/game/quit")]
 pub async fn quit_game(player: UserSession, state: &AppState) -> Result<(), Error> {
-    let game = state.lock().await
+    let game = state
+        .lock()
+        .await
         .get_game_by_player(&player.puuid)
         .await
         .ok_or(Error::NotInGame)?;
@@ -128,8 +111,10 @@ pub async fn quit_game(player: UserSession, state: &AppState) -> Result<(), Erro
 }
 
 #[post("/game/start")]
-pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Error>{
-    let game = state.lock().await
+pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Error> {
+    let game = state
+        .lock()
+        .await
         .get_game_by_player(&player.puuid)
         .await
         .ok_or(Error::NotInGame)?;

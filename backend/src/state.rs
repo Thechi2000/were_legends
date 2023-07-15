@@ -1,6 +1,6 @@
 use crate::game::{player::proxy::PlayerProxy, GameState};
 use std::{
-    collections::{HashMap, hash_map::Entry},
+    collections::{hash_map::Entry, HashMap},
     sync::{Arc, Mutex},
 };
 use tokio::sync::RwLock;

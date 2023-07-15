@@ -1,14 +1,18 @@
 use self::player::{classes::PlayerState, proxy::PlayerProxy, Player};
 use crate::{
-    lol_api::{self},
-    models::{AllGameData, MergedGameData, MergedGameDataMutation},
+    lol_api::{
+        self,
+        spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    },
     routes::error::Error,
+    session_management::UserSession,
 };
 use mutable::Mutable;
 use serde::Serialize;
 use std::{
     collections::{hash_map, HashMap},
-    sync::Arc,
+    sync::{Arc, Weak},
+    time::Duration,
 };
 use tokio::sync::{
     mpsc::{Receiver, Sender},
@@ -21,7 +25,7 @@ pub mod player;
 pub mod team_builder;
 
 pub enum GameEvent {
-    MatchDataMutation(Box<MergedGameDataMutation>),
+    MatchDataMutation(Box<CurrentGameInfoMutation>),
     PlayerJoin { id: String, name: String },
     GameStart,
 }
@@ -46,7 +50,7 @@ pub struct AuthenticatedGameStatus {
 pub struct GameState {
     uid: Uuid,
     players: HashMap<String, Player>,
-    data: RwLock<Option<MergedGameData>>,
+    data: RwLock<Option<CurrentGameInfo>>,
     event_queue: Sender<GameEvent>,
 }
 
@@ -69,7 +73,11 @@ impl GameState {
     pub async fn get_status(&self) -> GameStatus {
         GameStatus {
             uid: self.uid,
-            player_names: self.players.values().map(|p| p.name.clone()).collect(),
+            player_names: self
+                .players
+                .values()
+                .map(|p| p.session.name.clone())
+                .collect(),
         }
     }
 
@@ -82,7 +90,11 @@ impl GameState {
     ) -> Result<AuthenticatedGameStatus, Error> {
         Ok(AuthenticatedGameStatus {
             uid: self.uid,
-            player_names: self.players.values().map(|p| p.name.clone()).collect(),
+            player_names: self
+                .players
+                .values()
+                .map(|p| p.session.name.clone())
+                .collect(),
             has_started: self.data.read().await.is_some(),
             player_state: self.players.get(puuid).ok_or(Error::Unauthorized)?.state(),
         })
@@ -102,19 +114,19 @@ impl GameState {
     ///
     /// - puuid: Puuid of the player to add
     /// - proxy: Proxy of the player to communicate messages
-    pub async fn add_player(&mut self, puuid: String, proxy: PlayerProxy) -> Result<(), Error> {
-        let player_name = lol_api::account::get_by_puuid(puuid.clone())
-            .await?
-            .game_name;
-
+    pub async fn add_player(
+        &mut self,
+        session: UserSession,
+        proxy: PlayerProxy,
+    ) -> Result<(), Error> {
         if self.players.len() > 5 {
             Err(Error::MaxPlayerReached)
-        } else if let hash_map::Entry::Vacant(e) = self.players.entry(puuid.clone()) {
-            e.insert(Player::new(player_name.clone(), proxy));
+        } else if let hash_map::Entry::Vacant(e) = self.players.entry(session.puuid.clone()) {
+            e.insert(Player::new(session.clone(), proxy));
             self.event_queue
                 .send(GameEvent::PlayerJoin {
-                    id: puuid,
-                    name: player_name,
+                    id: session.puuid,
+                    name: session.name,
                 })
                 .await?;
             Ok(())
@@ -135,15 +147,13 @@ impl GameState {
     }
 
     /// Update the state of the game with data from the LoL Client API
-    pub async fn update_state(&mut self, data: AllGameData) {
-        let merged_game_data = MergedGameData::from(data);
-
+    pub async fn update_state(&mut self, game_info: CurrentGameInfo) {
         let mut data = self.data.write().await;
         if data.is_none() {
-            *data = Some(MergedGameData::default());
+            *data = Some(CurrentGameInfo::default());
         }
 
-        let mutations = data.as_mut().unwrap().update(merged_game_data);
+        let mutations = data.as_mut().unwrap().update(game_info);
         for mutation in mutations {
             if let Err(e) = self
                 .event_queue
@@ -166,8 +176,6 @@ impl GameState {
             player.set_role(*role)?;
         }
 
-        // TODO start background task for game data fetching
-
         Ok(())
     }
 
@@ -184,14 +192,45 @@ impl GameState {
                         }
                     }
                     GameEvent::MatchDataMutation(m) => {
-                        for player in state.read().await.players.values() {
-                            player.proxy.send_message(messages::Message::Debug {
-                                value: format!("{m:#?}"),
-                            })
+                        if let Some(game_data) = state.read().await.data.read().await.as_ref() {
+                            for player in state.read().await.players.values() {
+                                if let Err(e) = player.receive_mutation(&m, game_data) {
+                                    tracing::error!("Could not process game mutation: {:?}", e)
+                                }
+                            }
                         }
                     }
                     _ => todo!(),
                 }
+            }
+        }
+    }
+
+    async fn fetch_updates(state: Weak<RwLock<Self>>) {
+        let mut summoner_id = None;
+        loop {
+            tokio::time::sleep(Duration::from_secs(3)).await;
+
+            if let Some(state) = state.upgrade() {
+                if summoner_id.is_none() {
+                    summoner_id = state
+                        .read()
+                        .await
+                        .players
+                        .values()
+                        .next()
+                        .map(|p| p.session.summoner_id.clone());
+                }
+
+                if let Some(ref summoner_id) = summoner_id {
+                    if let Ok(match_info) =
+                        lol_api::spectator::get_active_game(summoner_id.clone()).await
+                    {
+                        state.write().await.update_state(match_info).await;
+                    }
+                }
+            } else {
+                break;
             }
         }
     }

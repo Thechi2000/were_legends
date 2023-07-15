@@ -4,7 +4,7 @@ use super::{player::classes::droid::Mission, team_builder::Role};
 
 /// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]
-#[serde(tag="type", rename_all="snake_case")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Message {
     Hi,
     PlayerJoin {

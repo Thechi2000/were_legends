@@ -32,7 +32,6 @@ async fn rocket() -> _ {
                 routes::game::join_game,
                 routes::game::quit_game,
                 routes::game::start_game,
-                routes::game::update_game,
             ],
         )
 }

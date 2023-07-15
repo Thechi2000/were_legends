@@ -11,7 +11,7 @@ use crate::{env::env_config, lol_api::summoners::get_by_name, routes::error::Err
 const SESSION_COOKIE_NAME: &str = "session";
 
 /// Guard for the user's session
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct UserSession {
     pub name: String,
     pub puuid: String,
@@ -65,7 +65,9 @@ impl UserSession {
     }
 
     pub async fn new(name: String) -> Result<Self, Error> {
-        let summoner = get_by_name(name.clone()).await.map_err(|_| Error::InvalidName)?;
+        let summoner = get_by_name(name.clone())
+            .await
+            .map_err(|_| Error::InvalidName)?;
         Ok(Self {
             name,
             puuid: summoner.puuid,

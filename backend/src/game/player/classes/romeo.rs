@@ -3,7 +3,11 @@ use std::sync::Mutex;
 use rand::{seq::IteratorRandom, thread_rng};
 use serde::Serialize;
 
-use crate::{game::messages::Message, routes::error::Error};
+use crate::{
+    game::messages::Message,
+    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    routes::error::Error,
+};
 
 use super::Class;
 
@@ -20,14 +24,14 @@ pub struct Romeo {
 impl Class for Romeo {
     fn init(
         &self,
-        game_data: &crate::models::MergedGameData,
+        game_data: &CurrentGameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         let juliette = game_data
-            .all_players
+            .participants
             .iter()
             .map(|p| &p.summoner_name)
-            .filter(|p| &&player.name != p)
+            .filter(|p| &&player.session.name != p)
             .choose(&mut thread_rng())
             .ok_or_else(|| Error::Internal {
                 msg: "Could not randomly choose juliette".into(),
@@ -44,8 +48,8 @@ impl Class for Romeo {
 
     fn update(
         &self,
-        _mutation: &crate::models::MergedGameDataMutation,
-        _game_data: &crate::models::MergedGameData,
+        _mutation: &CurrentGameInfoMutation,
+        _game_data: &CurrentGameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())

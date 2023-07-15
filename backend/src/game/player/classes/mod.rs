@@ -1,15 +1,14 @@
-use mutable::default_impl::VecMutation;
 use serde::Serialize;
 
 use crate::{
     game::team_builder::Role,
-    models::{EventData, EventsMutation, MergedGameData, MergedGameDataMutation},
+    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
     routes::error::Error,
 };
 
 use self::{
-    droid::{Droid, DroidState},
     crook::{Crook, CrookState},
+    droid::{Droid, DroidState},
     impostor::{Impostor, ImpostorState},
     kamikaze::{Kamikaze, KamikazeState},
     romeo::{Romeo, RomeoState},
@@ -19,8 +18,8 @@ use self::{
 
 use super::Player;
 
-pub mod droid;
 pub mod crook;
+pub mod droid;
 pub mod impostor;
 pub mod kamikaze;
 pub mod romeo;
@@ -52,13 +51,13 @@ pub enum PlayerState {
 trait Class {
     fn init(
         &self,
-        game_data: &crate::models::MergedGameData,
+        game_data: &CurrentGameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), Error>;
     fn update(
         &self,
-        mutation: &MergedGameDataMutation,
-        game_data: &MergedGameData,
+        mutation: &CurrentGameInfoMutation,
+        game_data: &CurrentGameInfo,
         player: &Player,
     ) -> Result<(), Error>;
     fn state(&self) -> PlayerState;
@@ -74,27 +73,17 @@ impl PlayerClass {
             PlayerClass::Kamikaze(i) => i,
             PlayerClass::Romeo(i) => i,
             PlayerClass::TwoFace(i) => i,
-            
         }
     }
 
-    pub fn receive_update(
+    pub fn receive_mutation(
         &self,
-        mutation: &MergedGameDataMutation,
-        game_data: &MergedGameData,
+        mutation: &CurrentGameInfoMutation,
+        game_data: &CurrentGameInfo,
         player: &Player,
     ) -> Result<(), Error> {
         match mutation {
-            MergedGameDataMutation::Events(EventsMutation::Events(VecMutation::Insertion(idx)))
-                if game_data
-                    .events
-                    .events
-                    .iter()
-                    .find(|e| e.event_id == *idx)
-                    .is_some_and(|e| matches!(e.data, EventData::GameStart)) =>
-            {
-                self.inner().init(game_data, player)
-            }
+            CurrentGameInfoMutation::GameStartTime((0, _)) => self.inner().init(game_data, player),
             m => self.inner().update(m, game_data, player),
         }
     }

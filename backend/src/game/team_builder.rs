@@ -1,9 +1,9 @@
 use rand::seq::IteratorRandom;
-use Role::*;
 use serde::Serialize;
+use Role::*;
 
 #[derive(Clone, Copy, Debug, Serialize)]
-#[serde(rename_all="snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum Role {
     SuperHero,
     Impostor,
@@ -15,7 +15,7 @@ pub enum Role {
 }
 
 /// Generates a random composition for a game
-/// 
+///
 /// The composition will contain:
 /// - One SuperHero
 /// - One Impostor and or one Crook
