@@ -47,14 +47,14 @@ export default function Game({ data }: { data: RolesData }) {
     var running = true;
 
     async function fetchUpdates() {
-      while (running) {
-        await sleep(3000);
+      if (game) {
+        var new_game = game;
+        while (running) {
+          await sleep(3000);
 
-        if (game) {
           var updates = await getUpdates();
 
           if (updates && updates.length > 0) {
-            var new_game = game;
             for (var i = 0; i < updates.length; ++i) {
               new_game = applyUpdate(new_game, updates[i]);
             }
