@@ -41,11 +41,9 @@ export default function Game() {
     var running = true;
 
     async function fetchUpdates() {
-      console.log("background task");
       while (running) {
         await sleep(3000);
 
-        console.log("fetching updates");
         if (game) {
           var updates = await getUpdates();
 
@@ -66,14 +64,15 @@ export default function Game() {
   });
 
   function generatePlayerInfos() {
-    if(game) {
-        game.player_names.sort()
+    if (game) {
+      game.player_names.sort();
     }
 
     var arr = [];
     for (var i = 0; i < 5; ++i) {
       arr.push(
         <PlayerInfo
+          key={`player${i}`}
           name={
             game && game?.player_names.length > i
               ? game.player_names[i]
