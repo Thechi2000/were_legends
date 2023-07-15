@@ -125,6 +125,15 @@ export async function getUpdates(): Promise<Update[] | null> {
   return res.status == 200 ? res.json() : null;
 }
 
+export async function startGame() {
+    let res = await fetch(`https://localhost/api/game/start`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${get_session_token()}`,
+      },
+    });
+}
+
 export function applyUpdate(state: GameState, update: Update): GameState {
   var cloned: GameState = JSON.parse(JSON.stringify(state));
 

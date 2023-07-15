@@ -1,7 +1,14 @@
-import { GameState, applyUpdate, getUpdates, get_current_game } from "@/api";
+import {
+  GameState,
+  applyUpdate,
+  getUpdates,
+  get_current_game,
+  startGame,
+} from "@/api";
 import { useRouter } from "next/router";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { ROOT_URL, sleep } from "@/utils";
+import { Button } from "@/components/inputs";
 
 function PlayerInfo({ name }: { name?: string }) {
   return (
@@ -47,10 +54,12 @@ export default function Game() {
         if (game) {
           var updates = await getUpdates();
 
-          if (updates) {
+          if (updates && updates.length > 0) {
+            var new_game = game;
             for (var i = 0; i < updates.length; ++i) {
-              setGame(applyUpdate(game, updates[i]));
+              new_game = applyUpdate(new_game, updates[i]);
             }
+            setGame(new_game);
           }
         }
       }
@@ -108,7 +117,11 @@ export default function Game() {
           </button>
         </div>
       ) : (
-        <></>
+        <div>
+          <Button onClick={startGame} className="text-4xl py-3">
+            Start
+          </Button>
+        </div>
       )}
     </div>
   );
