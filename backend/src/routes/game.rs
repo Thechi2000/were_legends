@@ -126,3 +126,15 @@ pub async fn quit_game(player: UserSession, state: &AppState) -> Result<(), Erro
 
     Ok(())
 }
+
+#[post("/game/start")]
+pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Error>{
+    let game = state.lock().await
+        .get_game_by_player(&player.puuid)
+        .await
+        .ok_or(Error::NotInGame)?;
+
+    game.1.write().await.start()?;
+
+    Ok(())
+}

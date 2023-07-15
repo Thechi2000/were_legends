@@ -31,7 +31,6 @@ pub enum GameEvent {
 pub struct GameStatus {
     uid: Uuid,
     player_names: Vec<String>,
-    has_started: bool,
 }
 
 /// Public status of a game, augmented with the state of the player
@@ -71,7 +70,6 @@ impl GameState {
         GameStatus {
             uid: self.uid,
             player_names: self.players.values().map(|p| p.name.clone()).collect(),
-            has_started: self.data.read().await.is_some(),
         }
     }
 
@@ -97,7 +95,7 @@ impl GameState {
 
     /// Returns the number of players in the game
     pub fn player_count(&self) -> usize {
-        return self.players.len()
+        return self.players.len();
     }
 
     /// Add a player to this game
@@ -155,6 +153,22 @@ impl GameState {
                 tracing::error!("Could not send mutation to event queue: {e}")
             }
         }
+    }
+
+    pub fn start(&mut self) -> Result<(), Error> {
+        if self.player_count() != 5 {
+            return Err(Error::NotEnoughPlayers);
+        }
+
+        let composition = team_builder::generate_composition();
+
+        for (player, role) in self.players.values_mut().zip(composition.iter()) {
+            player.set_role(*role)?;
+        }
+
+        // TODO start background task for game data fetching
+
+        Ok(())
     }
 
     /// Background task listening and processing events

@@ -7,14 +7,16 @@ use serde::Serialize;
 use std::{fmt::Debug, io::Cursor};
 
 #[derive(Serialize, Debug)]
-#[serde(tag = "error", rename_all="SCREAMING_SNAKE_CASE")]
+#[serde(tag = "error", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Error {
     Unauthorized,
     NotFound,
     NotInGame,
     AlreadyInGame,
     MaxPlayerReached,
+    NotEnoughPlayers,
     InvalidName,
+    AlreadyStarted,
     Internal { msg: String },
 }
 
@@ -28,6 +30,8 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::MaxPlayerReached => Status::BadRequest,
             Error::Unauthorized => Status::Forbidden,
             Error::InvalidName => Status::BadRequest,
+            Error::NotEnoughPlayers => Status::BadRequest,
+            Error::AlreadyStarted => Status::BadRequest,
         };
         let Ok(body) = serde_json::to_string(&self) else {
             return Err(Status::InternalServerError)
