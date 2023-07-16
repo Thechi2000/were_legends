@@ -19,6 +19,7 @@ export type GameState = {
   player_state?: PlayerState;
   votes: { [key: string]: { [key: string]: string } };
   state: State;
+  roles: { [key: string]: string };
 };
 
 export interface PlayerState {
@@ -52,7 +53,7 @@ export type Update =
       type: "two_face_state";
       inting: boolean;
     }
-  | { type: "state"; state: State};
+  | { type: "state"; state: State };
 
 export interface ApiError {
   error: string;

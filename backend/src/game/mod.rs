@@ -41,6 +41,7 @@ pub struct GameStatus {
     #[serde(skip_serializing_if = "Option::is_none")]
     votes: Option<HashMap<String, HashMap<String, Role>>>,
     state: State,
+    roles: Option<HashMap<String, Role>>,
 }
 
 /// Public status of a game, augmented with the state of the player
@@ -54,6 +55,7 @@ pub struct AuthenticatedGameStatus {
     #[serde(skip_serializing_if = "Option::is_none")]
     votes: Option<HashMap<String, HashMap<String, Role>>>,
     state: State,
+    roles: Option<HashMap<String, Role>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -104,6 +106,22 @@ impl GameState {
                 .collect(),
             votes: self.get_votes().ok(),
             state: self.state.clone(),
+            roles: matches!(self.state, State::Finished)
+                .then_some(
+                    self.players
+                        .values()
+                        .map(|p| (p.session.name.clone(), p.role()))
+                        .fold(Some(HashMap::new()), |map, (name, role)| {
+                            match (map, role) {
+                                (Some(mut map), Some(role)) => {
+                                    map.insert(name, role);
+                                    Some(map)
+                                }
+                                _ => None,
+                            }
+                        }),
+                )
+                .flatten(),
         }
     }
 
@@ -125,6 +143,24 @@ impl GameState {
             player_state: self.players.get(puuid).ok_or(Error::Unauthorized)?.state(),
             votes: self.get_votes().ok(),
             state: self.state.clone(),
+            roles: matches!(self.state, State::Finished)
+                .then_some(
+                    self.players
+                        .values()
+                        .map(|p| (p.session.name.clone(), p.role()))
+                        .fold(Some(HashMap::new()), |map, (name, role)| {
+                            match (map, role) {
+                                (Some(mut map), Some(role)) => {
+                                    map.insert(name, role);
+                                    Some(map)
+                                }
+                                _ => {
+                                    None
+                                },
+                            }
+                        }),
+                )
+                .flatten(),
         });
         res
     }
@@ -212,10 +248,14 @@ impl GameState {
     pub fn add_votes(&mut self, name: String, votes: HashMap<String, Role>) -> Result<(), Error> {
         if self.votes.len() != 5 && !self.votes.contains_key(&name) {
             if let State::WaitingVotes { ref players } = self.state {
-                self.state = State::WaitingVotes {
-                    players: players.iter().filter(|p| p != &&name).cloned().collect(),
-                };
-                self.votes.insert(name, votes);
+                self.votes.insert(name.clone(), votes);
+                if self.votes.len() == 5 {
+                    self.state = State::Finished
+                } else {
+                    self.state = State::WaitingVotes {
+                        players: players.iter().filter(|p| p != &&name).cloned().collect(),
+                    };
+                }
 
                 for p in self.players.values() {
                     p.proxy.send_message(Message::State {

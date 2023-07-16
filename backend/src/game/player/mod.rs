@@ -56,4 +56,16 @@ impl Player {
 
         Ok(())
     }
+
+    pub fn role(&self) -> Option<Role> {
+        self.class.as_ref().map(|p| match p {
+            PlayerClass::SuperHero(_) => Role::SuperHero,
+            PlayerClass::Impostor(_) => Role::Impostor,
+            PlayerClass::Crook(_) => Role::Crook,
+            PlayerClass::Kamikaze(_) => Role::Kamikaze,
+            PlayerClass::Romeo(_) => Role::Romeo,
+            PlayerClass::TwoFace(_) => Role::TwoFace,
+            PlayerClass::Droid(_) => Role::Droid,
+        })
+    }
 }

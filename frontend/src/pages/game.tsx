@@ -9,7 +9,13 @@ import {
 } from "@/api";
 import { promises as fs } from "fs";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import {
+  DetailedHTMLProps,
+  HTMLAttributes,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ROOT_URL, sleep } from "@/utils";
 import { Button } from "@/components/inputs";
 import { RolesData } from "@/idata";
@@ -93,6 +99,41 @@ export default function Game({ data }: { data: RolesData }) {
     );
   }
 
+  function RoleInfo({
+    state,
+    role,
+    ...props
+  }: {
+    state: "selected" | "wrong" | "correct" | "none";
+    role: string | undefined;
+  } & DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
+    return (
+      <div
+        className={
+          "text-2xl text-sky-400 p-3 rounded-lg text-center align-middle leading-10 " +
+          (role === undefined
+            ? "bg-sky-900"
+            : state == "selected"
+            ? "bg-slate-200"
+            : state == "wrong"
+            ? "bg-sky-800 text-slate-300"
+            : state == "correct"
+            ? "bg-green-700 text-slate-200"
+            : "bg-teal-700 text-slate-300")
+        }
+        style={{
+          minHeight: "4rem",
+          maxHeight: "4rem",
+          minWidth: "10rem",
+          maxWidth: "10rem",
+        }}
+        {...props}
+      >
+        {role ? data[role].name : ""}
+      </div>
+    );
+  }
+
   function PlayerInfos() {
     function generatePlayerInfos() {
       if (game) {
@@ -122,13 +163,13 @@ export default function Game({ data }: { data: RolesData }) {
     );
   }
 
-  function QuitButton() {
+  function QuitButton({ big }: { big?: boolean }) {
     return (
       <Button
         onClick={() => {
           quitGame().then(refreshGame);
         }}
-        className="text-2xl py-2 max-w-fit"
+        className={(big ? "text-4xl py-3 " : "text-2xl py-2 ") + "max-w-fit"}
       >
         Quit
       </Button>
@@ -137,7 +178,52 @@ export default function Game({ data }: { data: RolesData }) {
 
   function Layout() {
     if (game) {
-      if (game.state.state == "waiting_votes") {
+      if (game.state.state == "finished") {
+        return (
+          <div className="flex flex-col gap-20 items-center">
+            <table className="border-separate border-spacing-x-8 border-spacing-y-4">
+              <tbody>
+                <tr>
+                  <td />
+                  {game.player_names.map((n) => (
+                    <th className="text-3xl" scope="col" key={n}>
+                      {n}
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  <td />
+                  {game.player_names.map((n) => (
+                    <td className="text-3xl" scope="col" key={n}>
+                      <RoleInfo state="none" role={game.roles[n]} />
+                    </td>
+                  ))}
+                </tr>
+                {game.player_names.map((n) => (
+                  <tr key={n}>
+                    <th className="text-3xl" scope="row">
+                      {n}
+                    </th>
+                    {game.player_names.map((n2) => (
+                      <td key={n2}>
+                        <RoleInfo
+                          role={game.votes[n][n2]}
+                          state={
+                            game.roles[n2] == game.votes[n][n2]
+                              ? "correct"
+                              : "wrong"
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <QuitButton big />
+          </div>
+        );
+      } else if (game.state.state == "waiting_votes") {
         var session = getSessionJWT();
 
         return (
