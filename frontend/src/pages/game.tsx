@@ -116,10 +116,10 @@ export default function Game({ data }: { data: RolesData }) {
             : state == "selected"
             ? "bg-slate-200"
             : state == "wrong"
-            ? "bg-sky-800 text-slate-300"
+            ? "bg-red-900 text-slate-300"
             : state == "correct"
             ? "bg-green-700 text-slate-200"
-            : "bg-teal-700 text-slate-300")
+            : "bg-sky-700 text-slate-300")
         }
         style={{
           minHeight: "4rem",
