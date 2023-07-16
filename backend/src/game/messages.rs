@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use super::{player::classes::droid::Mission, team_builder::Role};
+use super::{player::classes::droid::Mission, team_builder::Role, State};
 
 /// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]
@@ -25,5 +25,9 @@ pub enum Message {
     },
     TwoFaceState {
         inting: bool,
+    },
+    VotesCompleted,
+    State {
+        state: State,
     },
 }

@@ -1,8 +1,8 @@
 use rand::seq::IteratorRandom;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use Role::*;
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     SuperHero,

@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use rocket::{get, post, serde::json::Json};
 use uuid::Uuid;
 
 use crate::{
-    game::{AuthenticatedGameStatus, GameStatus},
+    game::{team_builder::Role, AuthenticatedGameStatus, GameStatus},
     session_management::UserSession,
     AppState,
 };
@@ -120,6 +122,27 @@ pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Err
         .ok_or(Error::NotInGame)?;
 
     game.1.write().await.start()?;
+
+    Ok(())
+}
+
+#[post("/game/votes", format = "json", data = "<votes>")]
+pub async fn post_votes(
+    player: UserSession,
+    state: &AppState,
+    votes: Json<HashMap<String, Role>>,
+) -> Result<(), Error> {
+    let game = state
+        .lock()
+        .await
+        .get_game_by_player(&player.puuid)
+        .await
+        .ok_or(Error::NotInGame)?;
+
+    game.1
+        .write()
+        .await
+        .add_votes(player.name, votes.into_inner())?;
 
     Ok(())
 }

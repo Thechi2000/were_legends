@@ -1,17 +1,27 @@
 import Link, { LinkProps } from "next/link";
 
-export function Button({ children, className, ...props }: any) {
+export function Button({ children, className, disabled, onClick, ...props }: any) {
+  function isDisabled() {
+    return disabled !== undefined && disabled;
+  }
+
   return (
     <div
       className={
-        "flex justify-between items-center gap-2 border-2 border-sky-400 rounded-md p-1 cursor-pointer " +
+        "flex justify-between items-center gap-2 border-2 border-sky-400 rounded-md p-1 " +
+        (isDisabled() ? "text-slate-400 " : "cursor-pointer ") +
         className
       }
+      onClick={() => {
+        if (!isDisabled()) {
+            onClick()
+        }
+      }}
       {...props}
     >
-      <i className="arrow-right" />
+      <i className={"arrow-right " + (isDisabled() ? "invisible" : "")} />
       {children}
-      <i className="arrow-left" />
+      <i className={"arrow-left " + (isDisabled() ? "invisible" : "")} />
     </div>
   );
 }

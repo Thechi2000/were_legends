@@ -37,7 +37,7 @@ export default function App({ Component, pageProps }: any) {
   }, [session]);
 
   return (
-    <main className="bg-sky-600 min-h-screen text-slate-200">
+    <main className="bg-sky-600 min-h-screen text-slate-200 select-none">
       <style jsx global>{`
         html {
           --font-rhuma-sinera: ${TITLE_FONT.style.fontFamily};

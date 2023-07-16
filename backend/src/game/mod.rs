@@ -1,4 +1,8 @@
-use self::player::{classes::PlayerState, proxy::PlayerProxy, Player};
+use self::{
+    messages::Message,
+    player::{classes::PlayerState, proxy::PlayerProxy, Player},
+    team_builder::Role,
+};
 use crate::{
     lol_api::{
         self,
@@ -34,6 +38,9 @@ pub enum GameEvent {
 pub struct GameStatus {
     uid: Uuid,
     player_names: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    votes: Option<HashMap<String, HashMap<String, Role>>>,
+    state: State,
 }
 
 /// Public status of a game, augmented with the state of the player
@@ -42,7 +49,20 @@ pub struct AuthenticatedGameStatus {
     uid: Uuid,
     player_names: Vec<String>,
     has_started: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     player_state: Option<PlayerState>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    votes: Option<HashMap<String, HashMap<String, Role>>>,
+    state: State,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "snake_case", tag = "state")]
+pub enum State {
+    NotStarted,
+    InGame,
+    WaitingVotes { players: Vec<String> },
+    Finished,
 }
 
 /// State of a game
@@ -51,6 +71,8 @@ pub struct GameState {
     players: HashMap<String, Player>,
     data: RwLock<Option<CurrentGameInfo>>,
     event_queue: Sender<GameEvent>,
+    votes: HashMap<String, HashMap<String, Role>>,
+    state: State,
 }
 
 impl GameState {
@@ -61,9 +83,12 @@ impl GameState {
             players: Default::default(),
             data: Default::default(),
             event_queue: tx,
+            votes: Default::default(),
+            state: State::NotStarted,
         }));
 
         tokio::spawn(Self::listen_events(rx, state.clone()));
+        tokio::spawn(Self::fetch_updates(Arc::downgrade(&state)));
 
         state
     }
@@ -77,6 +102,8 @@ impl GameState {
                 .values()
                 .map(|p| p.session.name.clone())
                 .collect(),
+            votes: self.get_votes().ok(),
+            state: self.state.clone(),
         }
     }
 
@@ -87,7 +114,7 @@ impl GameState {
         &self,
         puuid: &String,
     ) -> Result<AuthenticatedGameStatus, Error> {
-        Ok(AuthenticatedGameStatus {
+        let res = Ok(AuthenticatedGameStatus {
             uid: self.uid,
             player_names: self
                 .players
@@ -96,7 +123,10 @@ impl GameState {
                 .collect(),
             has_started: self.data.read().await.is_some(),
             player_state: self.players.get(puuid).ok_or(Error::Unauthorized)?.state(),
-        })
+            votes: self.get_votes().ok(),
+            state: self.state.clone(),
+        });
+        res
     }
 
     /// Returns whether the player with the given uuid is currently in this game
@@ -164,6 +194,7 @@ impl GameState {
         }
     }
 
+    /// Start the game by creating and assigning roles
     pub fn start(&mut self) -> Result<(), Error> {
         if self.player_count() != 5 {
             return Err(Error::NotEnoughPlayers);
@@ -176,6 +207,37 @@ impl GameState {
         }
 
         Ok(())
+    }
+
+    pub fn add_votes(&mut self, name: String, votes: HashMap<String, Role>) -> Result<(), Error> {
+        if self.votes.len() != 5 && !self.votes.contains_key(&name) {
+            if let State::WaitingVotes { ref players } = self.state {
+                self.state = State::WaitingVotes {
+                    players: players.iter().filter(|p| p != &&name).cloned().collect(),
+                };
+                self.votes.insert(name, votes);
+
+                for p in self.players.values() {
+                    p.proxy.send_message(Message::State {
+                        state: self.state.clone(),
+                    })
+                }
+
+                Ok(())
+            } else {
+                Err(Error::VotesClosed)
+            }
+        } else {
+            Err(Error::VotesClosed)
+        }
+    }
+
+    pub fn get_votes(&self) -> Result<HashMap<String, HashMap<String, Role>>, Error> {
+        if self.votes.len() == 5 {
+            Ok(self.votes.clone())
+        } else {
+            Err(Error::VotesNotReady)
+        }
     }
 
     /// Background task listening and processing events
@@ -207,7 +269,7 @@ impl GameState {
     async fn fetch_updates(state: Weak<RwLock<Self>>) {
         let mut summoner_id = None;
         loop {
-            tokio::time::sleep(Duration::from_secs(3)).await;
+            tokio::time::sleep(Duration::from_secs(10)).await;
 
             if let Some(state) = state.upgrade() {
                 if summoner_id.is_none() {
@@ -221,10 +283,33 @@ impl GameState {
                 }
 
                 if let Some(ref summoner_id) = summoner_id {
-                    if let Ok(match_info) =
-                        lol_api::spectator::get_active_game(summoner_id.clone()).await
-                    {
-                        state.write().await.update_state(match_info).await;
+                    match lol_api::spectator::get_active_game(summoner_id.clone()).await {
+                        Ok(match_info) => {
+                            let mut lock = state.write().await;
+                            if matches!(lock.state, State::NotStarted | State::InGame) {
+                                lock.update_state(match_info).await;
+                                lock.state = State::InGame
+                            }
+                        }
+                        Err(_) => {
+                            let mut lock = state.write().await;
+                            if lock.player_count() == 5
+                                && matches!(lock.state, State::NotStarted | State::InGame)
+                            {
+                                lock.state = State::WaitingVotes {
+                                    players: lock
+                                        .players
+                                        .values()
+                                        .map(|p| p.session.name.clone())
+                                        .collect(),
+                                };
+                                for p in lock.players.values() {
+                                    p.proxy.send_message(Message::State {
+                                        state: lock.state.clone(),
+                                    })
+                                }
+                            }
+                        }
                     }
                 }
             } else {

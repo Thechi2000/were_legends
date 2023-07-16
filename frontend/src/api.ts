@@ -6,12 +6,20 @@ export interface LoginResponse {
   token: string;
 }
 
-export interface GameState {
+export type State =
+  | { state: "not_started" }
+  | { state: "in_game" }
+  | { state: "finished" }
+  | { state: "waiting_votes"; players: string[] };
+
+export type GameState = {
   uid: string;
   player_names: string[];
   has_started: boolean;
   player_state?: PlayerState;
-}
+  votes: { [key: string]: { [key: string]: string } };
+  state: State;
+};
 
 export interface PlayerState {
   class: string;
@@ -43,7 +51,8 @@ export type Update =
   | {
       type: "two_face_state";
       inting: boolean;
-    };
+    }
+  | { type: "state"; state: State};
 
 export interface ApiError {
   error: string;
@@ -126,23 +135,33 @@ export async function getUpdates(): Promise<Update[] | null> {
 }
 
 export async function startGame() {
-    let res = await fetch(`https://localhost/api/game/start`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${getSessionToken()}`,
-      },
-    });
+  let res = await fetch(`https://localhost/api/game/start`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getSessionToken()}`,
+    },
+  });
 }
 
 export async function quitGame() {
-    await fetch(`https://localhost/api/game/quit`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${getSessionToken()}`,
-      },
-    });
+  await fetch(`https://localhost/api/game/quit`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getSessionToken()}`,
+    },
+  });
 }
 
+export async function sendVotes(votes: { [key: string]: string }) {
+  await fetch(`https://localhost/api/game/votes`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getSessionToken()}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(votes),
+  });
+}
 
 export function applyUpdate(state: GameState, update: Update): GameState {
   var cloned: GameState = JSON.parse(JSON.stringify(state));
@@ -179,6 +198,10 @@ export function applyUpdate(state: GameState, update: Update): GameState {
       if (cloned.player_state) {
         cloned.player_state.inting = update.inting;
       }
+      break;
+
+    case "state":
+      cloned.state = update.state;
       break;
   }
 

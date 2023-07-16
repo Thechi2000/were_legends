@@ -5,6 +5,7 @@ import {
   getCurrentGame,
   quitGame,
   startGame,
+  sendVotes,
 } from "@/api";
 import { promises as fs } from "fs";
 import { useRouter } from "next/router";
@@ -14,6 +15,7 @@ import { Button } from "@/components/inputs";
 import { RolesData } from "@/idata";
 import { RoleDisplay } from "@/components/roles";
 import path from "path";
+import getSessionJWT from "@/session";
 
 function PlayerInfo({ name }: { name?: string }) {
   return (
@@ -38,6 +40,7 @@ export default function Game({ data }: { data: RolesData }) {
   const router = useRouter();
   const [game, setGame] = useState(null as GameState | null);
   const inviteLinkRef = useRef<HTMLParagraphElement>(null);
+  const [votes, setVotes] = useState({} as { [key: string]: string });
 
   useEffect(() => {
     refreshGame();
@@ -78,6 +81,16 @@ export default function Game({ data }: { data: RolesData }) {
     } else {
       router.push("/");
     }
+  }
+
+  function hasVoted() {
+    var session = getSessionJWT();
+    return (
+      game &&
+      game.state.state == "waiting_votes" &&
+      session &&
+      game.state.players.indexOf(session.name) === -1
+    );
   }
 
   function PlayerInfos() {
@@ -124,7 +137,65 @@ export default function Game({ data }: { data: RolesData }) {
 
   function Layout() {
     if (game) {
-      if (game.player_state) {
+      if (game.state.state == "waiting_votes") {
+        var session = getSessionJWT();
+
+        return (
+          <div className="flex flex-col items-center gap-10">
+            <table className="border-separate border-spacing-x-8 border-spacing-y-4">
+              <thead>
+                <tr>
+                  {game.player_names
+                    .filter((p) => p != session?.name)
+                    .map((p) => (
+                      <th className="text-3xl" key={p}>
+                        {p}
+                      </th>
+                    ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(data).map((r) => (
+                  <tr key={r}>
+                    {game.player_names
+                      .filter((n) => n != session?.name)
+                      .map((n) => (
+                        <td
+                          className={
+                            "text-2xl text-sky-400 p-3 rounded-lg text-center align-middle leading-10 bg-sky-800 " +
+                            (votes[n] == r ? "bg-slate-200" : "bg-sky-800")
+                          }
+                          key={`${r}${n}`}
+                          onClick={() => {
+                            if (!hasVoted()) {
+                              var new_votes = JSON.parse(JSON.stringify(votes));
+                              new_votes[n] = r;
+                              setVotes(new_votes);
+                            }
+                          }}
+                        >
+                          {data[r].name}
+                        </td>
+                      ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Button
+              onClick={() => sendVotes(votes)}
+              disabled={Object.keys(votes).length != 4 || hasVoted()}
+              className="text-3xl w-fit py-3"
+            >
+              Submit
+            </Button>
+            {game.state.state == "waiting_votes" ? (
+              <p>Waiting for {game.state.players.join(", ")}</p>
+            ) : (
+              <></>
+            )}
+          </div>
+        );
+      } else if (game.player_state) {
         return (
           <div className="flex flex-row items-center gap-40">
             <PlayerInfos />
@@ -136,7 +207,7 @@ export default function Game({ data }: { data: RolesData }) {
           <div className="flex flex-col gap-5 justify-center items-center">
             <PlayerInfos />
             <p className="text-3xl">Invite your friends</p>
-            <p ref={inviteLinkRef} className="text-xl">
+            <p ref={inviteLinkRef} className="text-xl select-text">
               {ROOT_URL}/game/join?uid={game?.uid}
             </p>
             <button
