@@ -62,6 +62,7 @@ pub struct AuthenticatedGameStatus {
 #[serde(rename_all = "snake_case", tag = "state")]
 pub enum State {
     NotStarted,
+    WaitingGameStart,
     InGame,
     WaitingVotes { players: Vec<String> },
     Finished,
@@ -242,6 +243,8 @@ impl GameState {
             player.set_role(*role)?;
         }
 
+        self.state = State::WaitingGameStart;
+
         Ok(())
     }
 
@@ -312,6 +315,10 @@ impl GameState {
             tokio::time::sleep(Duration::from_secs(10)).await;
 
             if let Some(state) = state.upgrade() {
+                if !matches!(state.read().await.state, State::WaitingGameStart | State::InGame) {
+                    continue;
+                }
+
                 if summoner_id.is_none() {
                     summoner_id = state
                         .read()
@@ -326,7 +333,7 @@ impl GameState {
                     match lol_api::spectator::get_active_game(summoner_id.clone()).await {
                         Ok(match_info) => {
                             let mut lock = state.write().await;
-                            if matches!(lock.state, State::NotStarted | State::InGame) {
+                            if matches!(lock.state, State::WaitingGameStart | State::InGame) {
                                 lock.update_state(match_info).await;
                                 lock.state = State::InGame
                             }

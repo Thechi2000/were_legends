@@ -21,7 +21,7 @@ pub enum Role {
 /// - One Impostor and or one Crook
 /// - Two to three other roles, to fill up to five roles
 pub fn generate_composition() -> Vec<Role> {
-    let mut roles = vec![SuperHero];
+    let mut roles = vec![SuperHero, Droid, TwoFace];
 
     match rand::random::<u8>() % 3 {
         0 => roles.push(Impostor),
@@ -32,7 +32,7 @@ pub fn generate_composition() -> Vec<Role> {
         }
     }
 
-    let other_roles = vec![Kamikaze, Romeo, TwoFace, Droid];
+    let other_roles = vec![Kamikaze, Romeo];
     let slice = other_roles
         .iter()
         .choose_multiple(&mut rand::thread_rng(), 5 - roles.len());

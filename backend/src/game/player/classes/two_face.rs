@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Instant};
 
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Uniform};
@@ -15,6 +15,7 @@ use super::Class;
 struct State {
     inting: bool,
     next_swap_time: f64,
+    game_start: Option<Instant>,
 }
 
 #[derive(Default, Debug)]
@@ -31,7 +32,7 @@ impl Class for TwoFace {
         let mut lock = self.state.lock().unwrap();
 
         lock.inting = thread_rng().gen();
-        lock.next_swap_time = Uniform::new(120.0, 600.0).sample(&mut thread_rng());
+        lock.next_swap_time = Uniform::new(5.0, 20.0).sample(&mut thread_rng());
 
         player.proxy.send_message(Message::TwoFaceState {
             inting: lock.inting,
@@ -42,21 +43,31 @@ impl Class for TwoFace {
 
     fn update(
         &self,
-        mutation: &CurrentGameInfoMutation,
-        _game_data: &CurrentGameInfo,
+        _mutation: &CurrentGameInfoMutation,
+        game_data: &CurrentGameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        if let CurrentGameInfoMutation::GameLength((_, new_time)) = mutation {
-            let mut lock = self.state.lock().unwrap();
+        let mut lock = self.state.lock().unwrap();
+        if game_data.game_start_time != 0 && lock.game_start.is_none() {
+            lock.game_start = Some(Instant::now());
+        }
 
-            if lock.next_swap_time <= *new_time as f64 {
-                lock.inting = !lock.inting;
-                lock.next_swap_time += Uniform::new(120.0, 600.0).sample(&mut thread_rng());
+        if lock
+            .game_start
+            .is_some_and(|start| lock.next_swap_time <= start.elapsed().as_secs_f64())
+        {
+            lock.inting = !lock.inting;
+            lock.next_swap_time += Uniform::new(5.0, 20.0).sample(&mut thread_rng());
 
-                player.proxy.send_message(Message::TwoFaceState {
-                    inting: lock.inting,
-                });
-            }
+            println!(
+                "Assigning new inting: {} at {:?}",
+                lock.inting,
+                lock.game_start.map(|s| s.elapsed().as_secs())
+            );
+
+            player.proxy.send_message(Message::TwoFaceState {
+                inting: lock.inting,
+            });
         }
 
         Ok(())

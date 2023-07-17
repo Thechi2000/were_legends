@@ -99,6 +99,17 @@ pub struct GameCustomizationObject {
     pub content: String,
 }
 
+/* lazy_static! {
+    static ref DIR_READER: tokio::sync::Mutex<<Vec<std::fs::DirEntry> as IntoIterator>::IntoIter> = {
+        let mut vec: Vec<_> = std::fs::read_dir("data")
+            .unwrap()
+            .filter_map(Result::ok)
+            .collect();
+        vec.sort_by_key(|e| e.file_name());
+        tokio::sync::Mutex::new(vec.into_iter())
+    };
+} */
+
 pub async fn get_active_game(summoner_id: String) -> Result<CurrentGameInfo, Error> {
     make_api_call(
         format!("/lol/spectator/v4/active-games/by-summoner/{summoner_id}"),
@@ -106,4 +117,18 @@ pub async fn get_active_game(summoner_id: String) -> Result<CurrentGameInfo, Err
         false,
     )
     .await
+    /*  if let Some(entry) = DIR_READER.lock().await.nth(10) {
+        let res = serde_json::from_str::<CurrentGameInfo>(
+            tokio::fs::read_to_string(entry.path())
+                .await
+                .unwrap()
+                .as_str(),
+        )
+        .unwrap();
+        Ok(res)
+    } else {
+        Err(Error::Internal {
+            msg: "not found".into(),
+        })
+    } */
 }

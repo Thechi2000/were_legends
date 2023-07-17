@@ -8,6 +8,7 @@ export interface LoginResponse {
 
 export type State =
   | { state: "not_started" }
+  | { state: "waiting_game_start" }
   | { state: "in_game" }
   | { state: "finished" }
   | { state: "waiting_votes"; players: string[] };
