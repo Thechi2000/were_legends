@@ -18,7 +18,7 @@ import {
 } from "react";
 import { ROOT_URL, sleep } from "@/utils";
 import { Button } from "@/components/inputs";
-import { RolesData } from "@/idata";
+import { Data } from "@/idata";
 import { RoleDisplay } from "@/components/roles";
 import path from "path";
 import getSessionJWT from "@/session";
@@ -42,7 +42,7 @@ function PlayerInfo({ name }: { name?: string }) {
   );
 }
 
-export default function Game({ data }: { data: RolesData }) {
+export default function Game({ data }: { data: Data }) {
   const router = useRouter();
   const [game, setGame] = useState(null as GameState | null);
   const inviteLinkRef = useRef<HTMLParagraphElement>(null);
@@ -129,7 +129,7 @@ export default function Game({ data }: { data: RolesData }) {
         }}
         {...props}
       >
-        {role ? data[role].name : ""}
+        {role ? data.roles[role].name : ""}
       </div>
     );
   }
@@ -260,7 +260,7 @@ export default function Game({ data }: { data: RolesData }) {
                             }
                           }}
                         >
-                          {data[r].name}
+                          {data.roles[r].name}
                         </td>
                       ))}
                   </tr>

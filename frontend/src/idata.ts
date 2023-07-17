@@ -1,6 +1,11 @@
-export interface RolesData {
-  [key: string]: {
-    name: string;
-    description: string;
+export interface Data {
+  roles: {
+    [key: string]: {
+      name: string;
+      description: string;
+    };
+  };
+  missions: {
+    [key: string]: string;
   };
 }

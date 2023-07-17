@@ -1,7 +1,6 @@
 use std::{sync::Mutex, time::Instant};
 
 use rand::{thread_rng, Rng};
-use rand_derive::Rand;
 use rand_distr::{Distribution, Normal};
 use serde::Serialize;
 
@@ -13,10 +12,22 @@ use crate::{
 
 use super::{Class, PlayerState};
 
-#[derive(Debug, Rand, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mission {
-    SumBeforeTwo,
+    Summoners,
+    GoTop,
+    GoBot,
+    TakeBlue,
+    TakeRed,
+    Sing,
+    ExhortTeam,
+    StayBase,
+    IntPingMs,
+    Emote,
+    QOnCd,
+    WOnCd,
+    EOnCd,
 }
 
 #[derive(Default, Debug)]
@@ -64,7 +75,23 @@ impl Class for Droid {
             lock.next_mission_timestamp += Normal::new(20.0, 2.0)
                 .map_err(Error::from)?
                 .sample(&mut thread_rng());
-            lock.mission = Some(thread_rng().gen());
+
+            lock.mission = Some(match thread_rng().gen_range(0..12) {
+                0 => Mission::Summoners,
+                1 => Mission::GoTop,
+                2 => Mission::GoBot,
+                3 => Mission::TakeBlue,
+                4 => Mission::TakeRed,
+                5 => Mission::Sing,
+                6 => Mission::ExhortTeam,
+                7 => Mission::StayBase,
+                8 => Mission::IntPingMs,
+                9 => Mission::Emote,
+                10 => Mission::QOnCd,
+                11 => Mission::WOnCd,
+                12 => Mission::EOnCd,
+                _ => panic!(),
+            });
 
             println!(
                 "Assigning new mission: {:?} at {:?}",

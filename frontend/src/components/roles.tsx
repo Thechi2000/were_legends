@@ -1,12 +1,12 @@
 import { PlayerState } from "@/api";
-import { RolesData } from "@/idata";
+import { Data } from "@/idata";
 
 export function RoleDisplay({
   playerState,
   data,
 }: {
   playerState: PlayerState;
-  data: RolesData;
+  data: Data;
 }) {
   var comps = undefined;
 
@@ -14,7 +14,9 @@ export function RoleDisplay({
     case "droid":
       if (playerState.mission !== undefined) {
         comps = (
-          <p className="text-2xl">Current mission: {playerState.mission}</p>
+          <p className="text-2xl">
+            Current mission: {data.missions[playerState.mission]}
+          </p>
         );
       }
       break;
@@ -46,13 +48,13 @@ function DefaultRoleDisplay({
   comps,
 }: {
   playerState: PlayerState;
-  data: RolesData;
+  data: Data;
   comps?: JSX.Element[] | JSX.Element;
 }) {
   return (
     <div className="flex flex-col items-center gap-10 max-w-2xl text-center">
-      <h1 className="text-5xl">{data[playerState.class].name}</h1>
-      <p className="text-2xl">{data[playerState.class].description}</p>
+      <h1 className="text-5xl">{data.roles[playerState.class].name}</h1>
+      <p className="text-2xl">{data.roles[playerState.class].description}</p>
       {comps}
     </div>
   );
