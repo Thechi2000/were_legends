@@ -27,13 +27,13 @@ export default function Rules({ session, setSession }: any) {
       <p className="text-2xl w-2/3 text-center">
         You know League of Legends ? The game were you always loose because your
         team wants too ? Well now, they will continue, but while trying to not
-        get caught. Be reassured, they won't stop, otherwise the game would be
+        get caught. Be reassured, they won&apos;t stop, otherwise the game would be
         much less fun.
       </p>
       <p className="text-2xl w-2/3 text-center">
         At the start of the game, each player will be assigned a role. He must
         achieve its objectives, while keeping the role secret from the other
-        players and trying to figure out the other players' roles.
+        players and trying to figure out the other players&apos; roles.
       </p>
 
       <i className="h-2" />

@@ -32,10 +32,10 @@ export default function App({ Component, pageProps }: any) {
   }, []);
 
   useEffect(() => {
-    if (!session && Component.requireLogin) {
+    if (!session) {
       router.push("/login");
     }
-  }, [session]);
+  }, [session, router]);
 
   return (
     <main className="bg-sky-600 min-h-screen text-slate-200 select-none">

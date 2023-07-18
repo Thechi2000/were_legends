@@ -2,7 +2,6 @@ import { createGame, getCurrentGame, login } from "@/api";
 import { Button, Href } from "@/components/inputs";
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
 
 export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
