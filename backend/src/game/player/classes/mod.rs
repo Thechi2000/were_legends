@@ -1,8 +1,7 @@
 use serde::Serialize;
 
 use crate::{
-    game::team_builder::Role,
-    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    game::{team_builder::Role, GameInfo, GameInfoMutation},
     routes::error::Error,
 };
 
@@ -26,6 +25,7 @@ pub mod romeo;
 pub mod super_hero;
 pub mod two_face;
 
+#[derive(Debug)]
 pub enum PlayerClass {
     SuperHero(SuperHero),
     Impostor(Impostor),
@@ -49,15 +49,12 @@ pub enum PlayerState {
 }
 
 trait Class {
-    fn init(
-        &self,
-        game_data: &CurrentGameInfo,
-        player: &crate::game::player::Player,
-    ) -> Result<(), Error>;
+    fn init(&self, game_data: &GameInfo, player: &crate::game::player::Player)
+        -> Result<(), Error>;
     fn update(
         &self,
-        mutation: &CurrentGameInfoMutation,
-        game_data: &CurrentGameInfo,
+        mutation: &GameInfoMutation,
+        game_data: &GameInfo,
         player: &Player,
     ) -> Result<(), Error>;
     fn state(&self) -> PlayerState;
@@ -78,14 +75,15 @@ impl PlayerClass {
 
     pub fn receive_mutation(
         &self,
-        mutation: &CurrentGameInfoMutation,
-        game_data: &CurrentGameInfo,
+        mutation: &GameInfoMutation,
+        game_data: &GameInfo,
         player: &Player,
     ) -> Result<(), Error> {
-        match mutation {
-            CurrentGameInfoMutation::GameStartTime((0, _)) => self.inner().init(game_data, player),
+        /* match mutation {
+            GameInfoMutation::GameStartTime((0, _)) => self.inner().init(game_data, player),
             m => self.inner().update(m, game_data, player),
-        }
+        } */
+        todo!()
     }
 
     pub fn get_state(&self) -> PlayerState {

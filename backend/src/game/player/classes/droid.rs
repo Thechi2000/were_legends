@@ -5,8 +5,7 @@ use rand_distr::{Distribution, Normal};
 use serde::Serialize;
 
 use crate::{
-    game::messages::Message,
-    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    game::{messages::Message, GameInfoMutation, GameInfo},
     routes::error::Error,
 };
 
@@ -45,7 +44,7 @@ pub struct Droid {
 impl Class for Droid {
     fn init(
         &self,
-        _game_data: &CurrentGameInfo,
+        _game_data: &GameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         let mut lock = self.state.lock().unwrap();
@@ -59,8 +58,8 @@ impl Class for Droid {
 
     fn update(
         &self,
-        _mutation: &CurrentGameInfoMutation,
-        game_data: &CurrentGameInfo,
+        _mutation: &GameInfoMutation,
+        game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         let mut lock = self.state.lock().unwrap();

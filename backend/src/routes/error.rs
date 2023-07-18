@@ -19,6 +19,7 @@ pub enum Error {
     VotesNotReady,
     VotesClosed,
     AlreadyStarted,
+    IncorrectState,
     Internal { msg: String },
 }
 

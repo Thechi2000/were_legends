@@ -5,13 +5,12 @@ use rand_distr::{Distribution, Uniform};
 use serde::Serialize;
 
 use crate::{
-    game::messages::Message,
-    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    game::{messages::Message, GameInfoMutation, GameInfo},
 };
 
 use super::Class;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 struct State {
     inting: bool,
     next_swap_time: f64,
@@ -26,7 +25,7 @@ pub struct TwoFace {
 impl Class for TwoFace {
     fn init(
         &self,
-        _game_data: &CurrentGameInfo,
+        _game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         let mut lock = self.state.lock().unwrap();
@@ -43,11 +42,11 @@ impl Class for TwoFace {
 
     fn update(
         &self,
-        _mutation: &CurrentGameInfoMutation,
-        game_data: &CurrentGameInfo,
+        _mutation: &GameInfoMutation,
+        game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        let mut lock = self.state.lock().unwrap();
+        /* let mut lock = self.state.lock().unwrap();
         if game_data.game_start_time != 0 && lock.game_start.is_none() {
             lock.game_start = Some(Instant::now());
         }
@@ -70,7 +69,8 @@ impl Class for TwoFace {
             });
         }
 
-        Ok(())
+        Ok(()) */
+        todo!()
     }
 
     fn state(&self) -> super::PlayerState {

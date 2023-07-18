@@ -20,13 +20,13 @@ pub async fn get_current_game_authenticated(
         state
             .lock()
             .await
-            .get_game_by_player(&player.puuid)
+            .get_game_by_player(&player.name)
             .await
             .ok_or(Error::NotFound)?
             .1
             .read()
             .await
-            .get_status_authenticated(&player.puuid)
+            .get_status_authenticated(&player.name)
             .await?,
     ))
 }
@@ -46,7 +46,7 @@ pub async fn get_game_authenticated(
             .ok_or(Error::NotFound)?
             .read()
             .await
-            .get_status_authenticated(&player.puuid)
+            .get_status_authenticated(&player.name)
             .await?,
     ))
 }
@@ -63,7 +63,7 @@ pub async fn get_game(state: &AppState, uid: Uuid) -> Result<Json<GameStatus>, E
             .read()
             .await
             .get_status()
-            .await,
+            .await?,
     ))
 }
 
@@ -71,11 +71,11 @@ pub async fn get_game(state: &AppState, uid: Uuid) -> Result<Json<GameStatus>, E
 pub async fn create_game(player: UserSession, state: &AppState) -> Result<Json<Uuid>, Error> {
     let mut lock = state.lock().await;
 
-    if lock.get_game_by_player(&player.puuid).await.is_some() {
+    if lock.get_game_by_player(&player.name).await.is_some() {
         return Err(Error::AlreadyInGame);
     }
 
-    let proxy = lock.get_or_create_proxy(&player.puuid);
+    let proxy = lock.get_or_create_proxy(&player.name);
     let (uid, game) = lock.create_game();
 
     drop(lock);
@@ -88,7 +88,7 @@ pub async fn create_game(player: UserSession, state: &AppState) -> Result<Json<U
 #[post("/game/<uid>/join")]
 pub async fn join_game(player: UserSession, state: &AppState, uid: Uuid) -> Result<(), Error> {
     let lock = state.lock().await;
-    let proxy = lock.get_or_create_proxy(&player.puuid);
+    let proxy = lock.get_or_create_proxy(&player.name);
     let game = lock.get_game_by_id(uid).ok_or(Error::NotFound)?;
     drop(lock);
 
@@ -102,11 +102,11 @@ pub async fn quit_game(player: UserSession, state: &AppState) -> Result<(), Erro
     let game = state
         .lock()
         .await
-        .get_game_by_player(&player.puuid)
+        .get_game_by_player(&player.name)
         .await
         .ok_or(Error::NotInGame)?;
 
-    game.1.write().await.remove_player(player.puuid).await?;
+    game.1.write().await.remove_player(player.name).await?;
     state.lock().await.try_remove_game(game.0).await;
 
     Ok(())
@@ -117,11 +117,11 @@ pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Err
     let game = state
         .lock()
         .await
-        .get_game_by_player(&player.puuid)
+        .get_game_by_player(&player.name)
         .await
         .ok_or(Error::NotInGame)?;
 
-    game.1.write().await.start()?;
+    game.1.write().await.start().await?;
 
     Ok(())
 }
@@ -135,14 +135,15 @@ pub async fn post_votes(
     let game = state
         .lock()
         .await
-        .get_game_by_player(&player.puuid)
+        .get_game_by_player(&player.name)
         .await
         .ok_or(Error::NotInGame)?;
 
     game.1
         .write()
         .await
-        .add_votes(player.name, votes.into_inner())?;
+        .add_votes(player.name, votes.into_inner())
+        .await?;
 
     Ok(())
 }

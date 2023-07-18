@@ -1,6 +1,7 @@
 use serde::Serialize;
 
-use crate::lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation};
+
+use crate::game::{GameInfo, GameInfoMutation};
 
 use super::Class;
 
@@ -9,7 +10,7 @@ pub struct Crook {}
 impl Class for Crook {
     fn init(
         &self,
-        _game_data: &CurrentGameInfo,
+        _game_data: &GameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())
@@ -17,8 +18,8 @@ impl Class for Crook {
 
     fn update(
         &self,
-        _mutation: &CurrentGameInfoMutation,
-        _game_data: &CurrentGameInfo,
+        _mutation: &GameInfoMutation,
+        _game_data: &GameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())

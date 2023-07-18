@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 
 pub mod env;
 pub mod game;
-pub mod lol_api;
+// pub mod lol_api;
 pub mod models;
 pub mod routes;
 pub mod session_management;

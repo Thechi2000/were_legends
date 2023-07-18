@@ -4,8 +4,7 @@ use rand::{seq::IteratorRandom, thread_rng};
 use serde::Serialize;
 
 use crate::{
-    game::messages::Message,
-    lol_api::spectator::{CurrentGameInfo, CurrentGameInfoMutation},
+    game::{messages::Message, GameInfo, GameInfoMutation},
     routes::error::Error,
 };
 
@@ -24,10 +23,10 @@ pub struct Romeo {
 impl Class for Romeo {
     fn init(
         &self,
-        game_data: &CurrentGameInfo,
+        game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        let juliette = game_data
+        /* let juliette = game_data
             .participants
             .iter()
             .map(|p| &p.summoner_name)
@@ -43,13 +42,14 @@ impl Class for Romeo {
             name: juliette.clone(),
         });
 
-        Ok(())
+        Ok(()) */
+        todo!()
     }
 
     fn update(
         &self,
-        _mutation: &CurrentGameInfoMutation,
-        _game_data: &CurrentGameInfo,
+        _mutation: &GameInfoMutation,
+        _game_data: &GameInfo,
         _player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
         Ok(())

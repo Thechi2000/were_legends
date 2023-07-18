@@ -26,7 +26,7 @@ pub async fn login(
 ) -> Result<Json<LoginResponse>, Error> {
     let state = state.lock().await;
     let session = UserSession::new(login_form.name.clone()).await?;
-    state.get_or_create_proxy(&session.puuid);
+    state.get_or_create_proxy(&session.name);
 
     session
         .encode()
@@ -42,7 +42,7 @@ pub async fn get_updates(
     let state = state.lock().await;
 
     let lock = state.messages.lock().unwrap();
-    let Some(messages_mutex) = lock.get(&session.puuid) else {
+    let Some(messages_mutex) = lock.get(&session.name) else {
         return Err(Error::NotFound)
     };
 

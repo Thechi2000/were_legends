@@ -1,7 +1,7 @@
 use crate::game::messages::Message;
 use std::sync::{Arc, Mutex};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PlayerProxy {
     pub messages: Arc<Mutex<Vec<Message>>>,
 }
