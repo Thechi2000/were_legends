@@ -6,23 +6,6 @@ export interface LoginResponse {
   token: string;
 }
 
-/* export type State =
-  | { state: "not_started" }
-  | { state: "waiting_game_start" }
-  | { state: "in_game" }
-  | { state: "finished" }
-  | { state: "waiting_votes"; players: string[] };
-
-export type GameState = {
-  uid: string;
-  player_names: string[];
-  has_started: boolean;
-  player_state?: PlayerState;
-  votes: { [key: string]: { [key: string]: string } };
-  state: State;
-  roles: { [key: string]: string };
-}; */
-
 export type GameState = { uid: string; player_names: string[] } & (
   | {
       state: "setup";
@@ -43,7 +26,6 @@ export interface PlayerState {
   inting?: boolean;
   mission?: string;
 }
-
 
 export interface ApiError {
   error: string;
@@ -85,78 +67,86 @@ export async function login(name: string): Promise<LoginResponse | ApiError> {
   return res.json();
 }
 
-export async function createGame(): Promise<string | null> {
+export async function createGame(bearer?: string): Promise<string | null> {
   let res = await fetch(`${API_ROOT}/game`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
   return res.status == 200 ? res.json() : null;
 }
 
-export async function getGame(uid: string): Promise<GameState | null> {
+export async function getGame(
+  uid: string,
+  bearer?: string
+): Promise<GameState | null> {
   let res = await fetch(`${API_ROOT}/game/${uid}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
   return res.status == 200 ? res.json() : null;
 }
 
-export async function getCurrentGame(): Promise<Response<GameState>> {
+export async function getCurrentGame(
+  bearer?: string
+): Promise<Response<GameState>> {
   let res = await fetch(`${API_ROOT}/game`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
   return await convertResponse(res);
 }
 
 export async function joinGame(uid: string, bearer?: string) {
-    let res =await fetch(`${API_ROOT}/game/${uid}/join`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${bearer || getSessionToken()}`,
-      },
-    });
-    return await convertResponse(res);
-  }
+  let res = await fetch(`${API_ROOT}/game/${uid}/join`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
+    },
+  });
+  return await convertResponse(res);
+}
 
-export async function startGame() {
+export async function startGame(bearer?: string) {
   let res = await fetch(`${API_ROOT}/game/start`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
 }
 
-export async function endGame() {
+export async function endGame(bearer?: string) {
   let res = await fetch(`${API_ROOT}/game/end`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
 }
 
-export async function quitGame() {
+export async function quitGame(bearer?: string) {
   await fetch(`${API_ROOT}/game/quit`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
     },
   });
 }
 
-export async function sendVotes(votes: { [key: string]: string }) {
+export async function sendVotes(
+  votes: { [key: string]: string },
+  bearer?: string
+) {
   await fetch(`${API_ROOT}/game/votes`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getSessionToken()}`,
+      Authorization: `Bearer ${bearer || getSessionToken()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(votes),
