@@ -1,6 +1,6 @@
 import Cookies from "universal-cookie";
 
-var API_ROOT = process.env["API_ROOT_URL"];
+var API_ROOT = "http://localhost/api";
 
 export interface LoginResponse {
   token: string;
@@ -74,7 +74,7 @@ function getSessionToken(): string | null {
 }
 
 export async function login(name: string): Promise<LoginResponse | ApiError> {
-  let res = await fetch(`https://localhost/api/login`, {
+  let res = await fetch(`${API_ROOT}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export async function login(name: string): Promise<LoginResponse | ApiError> {
 }
 
 export async function createGame(): Promise<string | null> {
-  let res = await fetch(`https://localhost/api/game`, {
+  let res = await fetch(`${API_ROOT}/game`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -96,7 +96,7 @@ export async function createGame(): Promise<string | null> {
 }
 
 export async function getGame(uid: string): Promise<GameState | null> {
-  let res = await fetch(`https://localhost/api/game/${uid}`, {
+  let res = await fetch(`${API_ROOT}/game/${uid}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -106,7 +106,7 @@ export async function getGame(uid: string): Promise<GameState | null> {
 }
 
 export async function getCurrentGame(): Promise<Response<GameState>> {
-  let res = await fetch(`https://localhost/api/game`, {
+  let res = await fetch(`${API_ROOT}/game`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -115,8 +115,18 @@ export async function getCurrentGame(): Promise<Response<GameState>> {
   return await convertResponse(res);
 }
 
+export async function joinGame(uid: string, bearer?: string) {
+    let res =await fetch(`${API_ROOT}/game/${uid}/join`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${bearer || getSessionToken()}`,
+      },
+    });
+    return await convertResponse(res);
+  }
+
 export async function startGame() {
-  let res = await fetch(`https://localhost/api/game/start`, {
+  let res = await fetch(`${API_ROOT}/game/start`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -125,7 +135,7 @@ export async function startGame() {
 }
 
 export async function endGame() {
-  let res = await fetch(`https://localhost/api/game/end`, {
+  let res = await fetch(`${API_ROOT}/game/end`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -134,7 +144,7 @@ export async function endGame() {
 }
 
 export async function quitGame() {
-  await fetch(`https://localhost/api/game/quit`, {
+  await fetch(`${API_ROOT}/game/quit`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -143,7 +153,7 @@ export async function quitGame() {
 }
 
 export async function sendVotes(votes: { [key: string]: string }) {
-  await fetch(`https://localhost/api/game/votes`, {
+  await fetch(`${API_ROOT}/game/votes`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
