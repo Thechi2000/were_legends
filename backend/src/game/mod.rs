@@ -7,8 +7,8 @@ use mutable::Mutable;
 use serde::Serialize;
 use std::{
     collections::{hash_map, HashMap},
-    sync::Arc,
-    time::Instant,
+    sync::{Arc, Weak},
+    time::{Duration, Instant},
 };
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -21,11 +21,6 @@ macro_rules! require_state {
     ($state:pat, $self:expr) => {
         let $state = $self.state else { return Err(Error::IncorrectState); };
     };
-}
-
-pub enum GameEvent {
-    PlayerJoin { id: String, name: String },
-    NewState { state: InnerState },
 }
 
 /// Public status of a game
@@ -55,11 +50,13 @@ pub struct GameState {
     state: InnerState,
 }
 
-#[derive(Debug, Mutable)]
-struct GameInfo;
+#[derive(Debug, Mutable, Default)]
+pub struct GameInfo {
+    pub duration: u64,
+}
 
 #[derive(Debug)]
-pub enum InnerState {
+enum InnerState {
     Setup,
     Draft,
     InGame {
@@ -132,7 +129,7 @@ impl GameState {
         }));
 
         // tokio::spawn(Self::listen_events(rx, state.clone()));
-        // tokio::spawn(Self::fetch_updates(Arc::downgrade(&state)));
+        tokio::spawn(Self::fetch_updates(Arc::downgrade(&state)));
 
         state
     }
@@ -205,27 +202,35 @@ impl GameState {
     ///
     /// - puuid: Puuid of the player to remove
     pub async fn remove_player(&mut self, puuid: String) -> Result<(), Error> {
-        require_state!(InnerState::Setup, self);
-
-        if let Some(_) = self.players.remove(&puuid) {
-            Ok(())
-        } else {
-            Err(Error::NotInGame)
+        match self.state {
+            InnerState::Setup | InnerState::End { .. } => {
+                if let Some(_) = self.players.remove(&puuid) {
+                    Ok(())
+                } else {
+                    Err(Error::NotInGame)
+                }
+            }
+            _ => Err(Error::IncorrectState),
         }
     }
 
     /// Update the state of the game with data from the LoL Client API
-    /* pub async fn update_state(&mut self, game_info: CurrentGameInfo) {
-        let mut data = self.data.write().await;
-        if data.is_none() {
-            *data = Some(CurrentGameInfo::default());
-        }
+    pub async fn update_state(&mut self, game_info: GameInfo) {
+        if let InnerState::InGame { ref mut data, .. } = self.state {
+            if data.is_none() {
+                *data = Some(GameInfo::default());
+            }
 
-        let mutations = data.as_mut().unwrap().update(game_info);
-        for mutation in mutations {
-            todo!()
+            let mutations = data.as_mut().unwrap().update(game_info);
+            for mutation in mutations {
+                for player in self.players.values_mut() {
+                    if let Err(e) = player.receive_mutation(&mutation, data.as_ref().unwrap()) {
+                        tracing::error!("Could not process mutation: {:?}", e)
+                    }
+                }
+            }
         }
-    } */
+    }
 
     /// Start the game by creating and assigning roles
     pub async fn start(&mut self) -> Result<(), Error> {
@@ -252,6 +257,21 @@ impl GameState {
             _ => return Err(Error::IncorrectState),
         }
         Ok(())
+    }
+
+    pub async fn end(&mut self) -> Result<(), Error> {
+        if let InnerState::InGame { start, .. } = self.state {
+            if start.elapsed().as_secs() > 10 {
+                self.state = InnerState::Voting {
+                    votes: Default::default(),
+                };
+                Ok(())
+            } else {
+                Err(Error::IncorrectState)
+            }
+        } else {
+            Err(Error::IncorrectState)
+        }
     }
 
     pub async fn add_votes(
@@ -306,62 +326,19 @@ impl GameState {
         }
     } */
 
-    /* async fn fetch_updates(state: Weak<RwLock<Self>>) {
-        let mut summoner_id = None;
+    async fn fetch_updates(state: Weak<RwLock<Self>>) {
         loop {
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            tokio::time::sleep(Duration::from_secs(3)).await;
 
             if let Some(state) = state.upgrade() {
-                if !matches!(
-                    state.read().await.state,
-                    State::WaitingGameStart | State::InGame
-                ) {
-                    continue;
+                let mut lock = state.write().await;
+                if let InnerState::InGame { start, .. } = lock.state {
+                    lock.update_state(GameInfo {
+                        duration: start.elapsed().as_secs(),
+                    })
+                    .await;
                 }
-
-                if summoner_id.is_none() {
-                    summoner_id = state
-                        .read()
-                        .await
-                        .players
-                        .values()
-                        .next()
-                        .map(|p| p.session.summoner_id.clone());
-                }
-
-                if let Some(ref summoner_id) = summoner_id {
-                    match lol_api::spectator::get_active_game(summoner_id.clone()).await {
-                        Ok(match_info) => {
-                            let mut lock = state.write().await;
-                            if matches!(lock.state, State::WaitingGameStart | State::InGame) {
-                                lock.update_state(match_info).await;
-                                lock.state = State::InGame
-                            }
-                        }
-                        Err(_) => {
-                            let mut lock = state.write().await;
-                            if lock.player_count() == 5
-                                && matches!(lock.state, State::NotStarted | State::InGame)
-                            {
-                                lock.state = State::WaitingVotes {
-                                    players: lock
-                                        .players
-                                        .values()
-                                        .map(|p| p.session.name.clone())
-                                        .collect(),
-                                };
-                                for p in lock.players.values() {
-                                    p.proxy.send_message(Message::State {
-                                        state: lock.state.clone(),
-                                    })
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                break;
             }
         }
-    } */
+    }
 }

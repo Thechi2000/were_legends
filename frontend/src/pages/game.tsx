@@ -1,11 +1,10 @@
 import {
   GameState,
-  applyUpdate,
-  getUpdates,
   getCurrentGame,
   quitGame,
   startGame,
   sendVotes,
+  endGame,
 } from "@/api";
 import { promises as fs } from "fs";
 import { useRouter } from "next/router";
@@ -57,18 +56,18 @@ export default function Game({ data }: { data: Data }) {
 
     async function fetchUpdates() {
       if (game) {
-        var new_game = game;
         while (running) {
           await sleep(3000);
 
-          var updates = await getUpdates();
+          /* var updates = await getUpdates();
 
           if (updates && updates.length > 0) {
             for (var i = 0; i < updates.length; ++i) {
               new_game = applyUpdate(new_game, updates[i]);
             }
             setGame(new_game);
-          }
+          } */
+          refreshGame();
         }
       }
     }
@@ -93,9 +92,9 @@ export default function Game({ data }: { data: Data }) {
     var session = getSessionJWT();
     return (
       game &&
-      game.state.state == "waiting_votes" &&
+      game.state == "voting" &&
       session &&
-      game.state.players.indexOf(session.name) === -1
+      game.votes_received.indexOf(session.name) !== -1
     );
   }
 
@@ -178,159 +177,188 @@ export default function Game({ data }: { data: Data }) {
 
   function Layout() {
     if (game) {
-      if (game.state.state == "finished") {
-        return (
-          <div className="flex flex-col gap-20 items-center">
-            <table className="border-separate border-spacing-x-8 border-spacing-y-4">
-              <tbody>
-                <tr>
-                  <td />
-                  {game.player_names.map((n) => (
-                    <th className="text-3xl" scope="col" key={n}>
-                      {n}
-                    </th>
+      switch (game.state) {
+        case "setup":
+          return (
+            <>
+              <div className="flex flex-col gap-5 justify-center items-center">
+                <PlayerInfos />
+              </div>
+              {game.player_names.length == 5 ? (
+                <Button onClick={startGame} className="text-4xl py-3">
+                  Start
+                </Button>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-5 justify-center items-center">
+                    <p className="text-3xl">Invite your friends</p>
+                    <p ref={inviteLinkRef} className="text-xl select-text">
+                      {ROOT_URL}/game/join?uid={game?.uid}
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (
+                          inviteLinkRef.current &&
+                          inviteLinkRef.current.textContent
+                        ) {
+                          navigator.clipboard.writeText(
+                            inviteLinkRef.current.textContent
+                          );
+                        }
+                      }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+
+                  <QuitButton />
+                </>
+              )}
+            </>
+          );
+
+        case "draft":
+          return (
+            <div className="flex flex-col gap-20 justify-center items-center">
+              <div className="flex flex-row items-center gap-40">
+                <PlayerInfos />
+                <RoleDisplay playerState={game.player_state} data={data} />
+              </div>
+              <div className="flex flex-row items-center gap-40 text-3xl">
+                <p>Currently in draft mode</p>
+                <Button className="py-3" onClick={startGame}>
+                  Start game
+                </Button>
+              </div>
+            </div>
+          );
+
+        case "in_game":
+          return (
+            <div className="flex flex-col gap-20 justify-center items-center">
+              <div className="flex flex-row items-center gap-40">
+                <PlayerInfos />
+                <RoleDisplay playerState={game.player_state} data={data} />
+              </div>
+              <div className="flex flex-row items-center gap-40 text-3xl">
+                <p>Currently in game</p>
+                <Button className="py-3" onClick={endGame}>
+                  End game
+                </Button>
+              </div>
+            </div>
+          );
+
+        case "voting":
+          var session = getSessionJWT();
+
+          return (
+            <div className="flex flex-col items-center gap-10">
+              <table className="border-separate border-spacing-x-8 border-spacing-y-4">
+                <thead>
+                  <tr>
+                    {game.player_names
+                      .filter((p) => p != session?.name)
+                      .map((p) => (
+                        <th className="text-3xl" key={p}>
+                          {p}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(data.roles).map((r) => (
+                    <tr key={r}>
+                      {game.player_names
+                        .filter((n) => n != session?.name)
+                        .map((n) => (
+                          <td
+                            className={
+                              "text-2xl text-sky-400 p-3 rounded-lg text-center align-middle leading-10 bg-sky-800 " +
+                              (votes[n] == r ? "bg-slate-200" : "bg-sky-800")
+                            }
+                            key={`${r}${n}`}
+                            onClick={() => {
+                              if (!hasVoted()) {
+                                var new_votes = JSON.parse(
+                                  JSON.stringify(votes)
+                                );
+                                new_votes[n] = r;
+                                setVotes(new_votes);
+                              }
+                            }}
+                          >
+                            {data.roles[r].name}
+                          </td>
+                        ))}
+                    </tr>
                   ))}
-                </tr>
-                <tr>
-                  <td />
-                  {game.player_names.map((n) => (
-                    <td className="text-3xl" scope="col" key={n}>
-                      <RoleInfo state="none" role={game.roles[n]} />
-                    </td>
-                  ))}
-                </tr>
-                {game.player_names.map((n) => (
-                  <tr key={n}>
-                    <th className="text-3xl" scope="row">
-                      {n}
-                    </th>
-                    {game.player_names.map((n2) => (
-                      <td key={n2}>
-                        <RoleInfo
-                          role={game.votes[n][n2]}
-                          state={
-                            game.roles[n2] == game.votes[n][n2]
-                              ? "correct"
-                              : "wrong"
-                          }
-                        />
+                </tbody>
+              </table>
+              <Button
+                onClick={() => sendVotes(votes)}
+                disabled={Object.keys(votes).length != 4 || hasVoted()}
+                className="text-3xl w-fit py-3"
+              >
+                Submit
+              </Button>
+              <p>
+                Waiting for{" "}
+                {game.player_names
+                  .filter((n) => game.votes_received.indexOf(n) === -1)
+                  .join(", ")}
+              </p>
+            </div>
+          );
+
+        case "end":
+          return (
+            <div className="flex flex-col gap-20 items-center">
+              <table className="border-separate border-spacing-x-8 border-spacing-y-4">
+                <tbody>
+                  <tr>
+                    <td />
+                    {game.player_names.map((n) => (
+                      <th className="text-3xl" scope="col" key={n}>
+                        {n}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td />
+                    {game.player_names.map((n) => (
+                      <td className="text-3xl" scope="col" key={n}>
+                        <RoleInfo state="none" role={game.roles[n]} />
                       </td>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <QuitButton big />
-          </div>
-        );
-      } else if (game.state.state == "waiting_votes") {
-        var session = getSessionJWT();
-
-        return (
-          <div className="flex flex-col items-center gap-10">
-            <table className="border-separate border-spacing-x-8 border-spacing-y-4">
-              <thead>
-                <tr>
-                  {game.player_names
-                    .filter((p) => p != session?.name)
-                    .map((p) => (
-                      <th className="text-3xl" key={p}>
-                        {p}
+                  {game.player_names.map((n) => (
+                    <tr key={n}>
+                      <th className="text-3xl" scope="row">
+                        {n}
                       </th>
-                    ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(data).map((r) => (
-                  <tr key={r}>
-                    {game.player_names
-                      .filter((n) => n != session?.name)
-                      .map((n) => (
-                        <td
-                          className={
-                            "text-2xl text-sky-400 p-3 rounded-lg text-center align-middle leading-10 bg-sky-800 " +
-                            (votes[n] == r ? "bg-slate-200" : "bg-sky-800")
-                          }
-                          key={`${r}${n}`}
-                          onClick={() => {
-                            if (!hasVoted()) {
-                              var new_votes = JSON.parse(JSON.stringify(votes));
-                              new_votes[n] = r;
-                              setVotes(new_votes);
+                      {game.player_names.map((n2) => (
+                        <td key={n2}>
+                          <RoleInfo
+                            role={game.votes[n][n2]}
+                            state={
+                              game.roles[n2] == game.votes[n][n2]
+                                ? "correct"
+                                : "wrong"
                             }
-                          }}
-                        >
-                          {data.roles[r].name}
+                          />
                         </td>
                       ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Button
-              onClick={() => sendVotes(votes)}
-              disabled={Object.keys(votes).length != 4 || hasVoted()}
-              className="text-3xl w-fit py-3"
-            >
-              Submit
-            </Button>
-            {game.state.state == "waiting_votes" ? (
-              <p>Waiting for {game.state.players.join(", ")}</p>
-            ) : (
-              <></>
-            )}
-          </div>
-        );
-      } else if (game.player_state) {
-        return (
-          <div className="flex flex-row items-center gap-40">
-            <PlayerInfos />
-            <RoleDisplay playerState={game.player_state} data={data} />
-          </div>
-        );
-      } else if (game.player_names.length != 5) {
-        return (
-          <div className="flex flex-col gap-5 justify-center items-center">
-            <PlayerInfos />
-            <p className="text-3xl">Invite your friends</p>
-            <p ref={inviteLinkRef} className="text-xl select-text">
-              {ROOT_URL}/game/join?uid={game?.uid}
-            </p>
-            <button
-              onClick={() => {
-                if (
-                  inviteLinkRef.current &&
-                  inviteLinkRef.current.textContent
-                ) {
-                  navigator.clipboard.writeText(
-                    inviteLinkRef.current.textContent
-                  );
-                }
-              }}
-            >
-              Copy
-            </button>
-            <QuitButton />
-          </div>
-        );
-      } else {
-        return (
-          <div className="flex flex-col gap-5 justify-center items-center">
-            <PlayerInfos />
-            <div className="flex flex-col gap-4 items-center">
-              <Button onClick={startGame} className="text-4xl py-3">
-                Start
-              </Button>
-              <QuitButton />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <QuitButton big />
             </div>
-          </div>
-        );
+          );
       }
-    } else {
-      return <></>;
     }
   }
-
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-20 pb-20">
       <Layout />
@@ -339,10 +367,7 @@ export default function Game({ data }: { data: Data }) {
 }
 
 export async function getStaticProps() {
-  var buf = await fs.readFile(
-    path.join(process.cwd(), "data/roles.json"),
-    "utf8"
-  );
+  var buf = await fs.readFile(path.join(process.cwd(), "data.json"), "utf8");
   return { props: { data: JSON.parse(buf) } };
 }
 

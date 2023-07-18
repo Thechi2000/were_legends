@@ -126,6 +126,20 @@ pub async fn start_game(player: UserSession, state: &AppState) -> Result<(), Err
     Ok(())
 }
 
+#[post("/game/end")]
+pub async fn end_game(player: UserSession, state: &AppState) -> Result<(), Error> {
+    let game = state
+        .lock()
+        .await
+        .get_game_by_player(&player.name)
+        .await
+        .ok_or(Error::NotInGame)?;
+
+    game.1.write().await.end().await?;
+
+    Ok(())
+}
+
 #[post("/game/votes", format = "json", data = "<votes>")]
 pub async fn post_votes(
     player: UserSession,

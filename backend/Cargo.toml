@@ -10,8 +10,9 @@ envconfig = "0.10.0"
 jsonwebtoken = "8.3.0"
 lazy_static = "1.4.0"
 mutable = { version = "0.2.8", features = ["uuid"] }
+num-derive = "0.4.0"
+num-traits = "0.2.15"
 rand = "0.8.5"
-rand_derive = "0.5.0"
 rand_distr = "0.4.3"
 reqwest = { version = "0.11.18", features = ["json"] }
 rocket = { version = "0.5.0-rc.3", features = ["json", "uuid"] }

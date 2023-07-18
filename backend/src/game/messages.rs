@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use super::{player::classes::droid::Mission, team_builder::Role, PublicInnerState};
+use super::{player::classes::{droid::Mission, romeo::Juliette}, team_builder::Role, PublicInnerState};
 
 /// Messages that can be sent to players through the [PlayerProxy] interface
 #[derive(Serialize, Debug, Clone)]
@@ -10,10 +10,6 @@ pub enum Message {
     PlayerJoin {
         name: String,
     },
-    Debug {
-        // TODO
-        value: String,
-    },
     Role {
         role: Role,
     },
@@ -21,7 +17,8 @@ pub enum Message {
         mission: Mission,
     },
     Juliette {
-        name: String,
+        #[serde(flatten)]
+        juliette: Juliette,
     },
     TwoFaceState {
         inting: bool,

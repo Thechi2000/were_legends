@@ -62,7 +62,11 @@ impl UserSession {
     }
 
     pub async fn new(name: String) -> Result<Self, Error> {
-        Ok(Self { name })
+        if (1..16).contains(&name.len()) {
+            Ok(Self { name })
+        } else {
+            Err(Error::InvalidName)
+        }
     }
 }
 

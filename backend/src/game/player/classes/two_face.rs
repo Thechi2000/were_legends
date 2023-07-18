@@ -1,12 +1,10 @@
-use std::{sync::Mutex, time::Instant};
+use std::sync::Mutex;
 
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Uniform};
 use serde::Serialize;
 
-use crate::{
-    game::{messages::Message, GameInfoMutation, GameInfo},
-};
+use crate::game::{messages::Message, GameInfo, GameInfoMutation};
 
 use super::Class;
 
@@ -14,7 +12,6 @@ use super::Class;
 struct State {
     inting: bool,
     next_swap_time: f64,
-    game_start: Option<Instant>,
 }
 
 #[derive(Default, Debug)]
@@ -42,35 +39,26 @@ impl Class for TwoFace {
 
     fn update(
         &self,
-        _mutation: &GameInfoMutation,
-        game_data: &GameInfo,
+        mutation: &GameInfoMutation,
+        _game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        /* let mut lock = self.state.lock().unwrap();
-        if game_data.game_start_time != 0 && lock.game_start.is_none() {
-            lock.game_start = Some(Instant::now());
+        let mut lock = self.state.lock().unwrap();
+
+        #[allow(irrefutable_let_patterns)]
+        if let GameInfoMutation::Duration((_, new_time)) = mutation {
+            if lock.next_swap_time <= *new_time as f64 {
+                lock.inting = !lock.inting;
+                lock.next_swap_time += Uniform::new(5.0, 20.0).sample(&mut thread_rng());
+
+                println!("Assigning new inting: {} at {:?}", lock.inting, new_time);
+
+                player.proxy.send_message(Message::TwoFaceState {
+                    inting: lock.inting,
+                });
+            }
         }
-
-        if lock
-            .game_start
-            .is_some_and(|start| lock.next_swap_time <= start.elapsed().as_secs_f64())
-        {
-            lock.inting = !lock.inting;
-            lock.next_swap_time += Uniform::new(5.0, 20.0).sample(&mut thread_rng());
-
-            println!(
-                "Assigning new inting: {} at {:?}",
-                lock.inting,
-                lock.game_start.map(|s| s.elapsed().as_secs())
-            );
-
-            player.proxy.send_message(Message::TwoFaceState {
-                inting: lock.inting,
-            });
-        }
-
-        Ok(()) */
-        todo!()
+        Ok(())
     }
 
     fn state(&self) -> super::PlayerState {

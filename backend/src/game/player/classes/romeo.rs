@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 
+use num_derive::FromPrimitive;
 use rand::{seq::IteratorRandom, thread_rng};
 use serde::Serialize;
 
@@ -10,9 +11,43 @@ use crate::{
 
 use super::Class;
 
+#[derive(Debug, FromPrimitive, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlayerPosition {
+    AllyTop = 0,
+    AllyJungle,
+    AllyMid,
+    AllyBot,
+    AllySupport,
+    EnemyTop,
+    EnemyJungle,
+    EnemyMid,
+    EnemyBot,
+    EnemySupport,
+}
+
+const POSITIONS: [PlayerPosition; 10] = [
+    PlayerPosition::AllyTop,
+    PlayerPosition::AllyJungle,
+    PlayerPosition::AllyMid,
+    PlayerPosition::AllyBot,
+    PlayerPosition::AllySupport,
+    PlayerPosition::EnemyTop,
+    PlayerPosition::EnemyJungle,
+    PlayerPosition::EnemyMid,
+    PlayerPosition::EnemyBot,
+    PlayerPosition::EnemySupport,
+];
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Juliette {
+    juliette: PlayerPosition,
+    substitute: PlayerPosition,
+}
+
 #[derive(Default, Debug)]
 struct State {
-    juliette: Option<String>,
+    juliette: Option<Juliette>,
 }
 
 #[derive(Default, Debug)]
@@ -23,27 +58,33 @@ pub struct Romeo {
 impl Class for Romeo {
     fn init(
         &self,
-        game_data: &GameInfo,
+        _game_data: &GameInfo,
         player: &crate::game::player::Player,
     ) -> Result<(), crate::routes::error::Error> {
-        /* let juliette = game_data
-            .participants
+        let juliette = *POSITIONS
             .iter()
-            .map(|p| &p.summoner_name)
-            .filter(|p| &&player.session.name != p)
             .choose(&mut thread_rng())
-            .ok_or_else(|| Error::Internal {
-                msg: "Could not randomly choose juliette".into(),
+            .ok_or(Error::Internal {
+                msg: "rand error".into(),
             })?;
+        let juliette = Juliette {
+            juliette,
+            substitute: *POSITIONS
+                .iter()
+                .filter(|p| p != &&juliette)
+                .choose(&mut thread_rng())
+                .ok_or(Error::Internal {
+                    msg: "rand error".into(),
+                })?,
+        };
 
         self.state.lock().unwrap().juliette = Some(juliette.clone());
 
         player.proxy.send_message(Message::Juliette {
-            name: juliette.clone(),
+            juliette: juliette.clone(),
         });
 
-        Ok(()) */
-        todo!()
+        Ok(())
     }
 
     fn update(
@@ -65,5 +106,5 @@ impl Class for Romeo {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RomeoState {
-    juliette: Option<String>,
+    juliette: Option<Juliette>,
 }

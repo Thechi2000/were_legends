@@ -6,7 +6,7 @@ export interface LoginResponse {
   token: string;
 }
 
-export type State =
+/* export type State =
   | { state: "not_started" }
   | { state: "waiting_game_start" }
   | { state: "in_game" }
@@ -21,7 +21,21 @@ export type GameState = {
   votes: { [key: string]: { [key: string]: string } };
   state: State;
   roles: { [key: string]: string };
-};
+}; */
+
+export type GameState = { uid: string; player_names: string[] } & (
+  | {
+      state: "setup";
+    }
+  | { state: "draft"; player_state: PlayerState }
+  | { state: "in_game"; player_state: PlayerState }
+  | { state: "voting"; votes_received: string[]; player_state: PlayerState }
+  | {
+      state: "end";
+      votes: { [key: string]: { [key: string]: string } };
+      roles: { [key: string]: string };
+    }
+);
 
 export interface PlayerState {
   class: string;
@@ -30,31 +44,6 @@ export interface PlayerState {
   mission?: string;
 }
 
-export type Update =
-  | {
-      type: "hi";
-    }
-  | {
-      type: "player_join";
-      name: string;
-    }
-  | {
-      type: "role";
-      role: string;
-    }
-  | {
-      type: "mission";
-      mission: string;
-    }
-  | {
-      type: "juliette";
-      name: string;
-    }
-  | {
-      type: "two_face_state";
-      inting: boolean;
-    }
-  | { type: "state"; state: State };
 
 export interface ApiError {
   error: string;
@@ -126,18 +115,17 @@ export async function getCurrentGame(): Promise<Response<GameState>> {
   return await convertResponse(res);
 }
 
-export async function getUpdates(): Promise<Update[] | null> {
-  let res = await fetch(`https://localhost/api/updates`, {
-    method: "GET",
+export async function startGame() {
+  let res = await fetch(`https://localhost/api/game/start`, {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
     },
   });
-  return res.status == 200 ? res.json() : null;
 }
 
-export async function startGame() {
-  let res = await fetch(`https://localhost/api/game/start`, {
+export async function endGame() {
+  let res = await fetch(`https://localhost/api/game/end`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getSessionToken()}`,
@@ -163,49 +151,4 @@ export async function sendVotes(votes: { [key: string]: string }) {
     },
     body: JSON.stringify(votes),
   });
-}
-
-export function applyUpdate(state: GameState, update: Update): GameState {
-  var cloned: GameState = JSON.parse(JSON.stringify(state));
-
-  switch (update.type) {
-    case "hi":
-      break;
-
-    case "player_join":
-      if (cloned.player_names.indexOf(update.name) == -1) {
-        cloned.player_names.push(update.name);
-      }
-      break;
-
-    case "role":
-      cloned.player_state = {
-        class: update.role,
-      };
-      break;
-
-    case "mission":
-      if (cloned.player_state) {
-        cloned.player_state.mission = update.mission;
-      }
-      break;
-
-    case "juliette":
-      if (cloned.player_state) {
-        cloned.player_state.juliette = update.name;
-      }
-      break;
-
-    case "two_face_state":
-      if (cloned.player_state) {
-        cloned.player_state.inting = update.inting;
-      }
-      break;
-
-    case "state":
-      cloned.state = update.state;
-      break;
-  }
-
-  return cloned;
 }

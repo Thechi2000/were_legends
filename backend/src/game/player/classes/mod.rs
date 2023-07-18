@@ -79,11 +79,10 @@ impl PlayerClass {
         game_data: &GameInfo,
         player: &Player,
     ) -> Result<(), Error> {
-        /* match mutation {
-            GameInfoMutation::GameStartTime((0, _)) => self.inner().init(game_data, player),
+        match mutation {
+            GameInfoMutation::Duration((0, _)) => self.inner().init(game_data, player),
             m => self.inner().update(m, game_data, player),
-        } */
-        todo!()
+        }
     }
 
     pub fn get_state(&self) -> PlayerState {

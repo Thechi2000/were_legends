@@ -30,7 +30,7 @@ export default function Login({ session, setSessionToken }: any) {
     if (error) {
       switch (error.error) {
         case "INVALID_NAME":
-          setErrorInfo("Invalid summoner name");
+          setErrorInfo("Must be between 1 and 15 characters");
           break;
 
         default:
