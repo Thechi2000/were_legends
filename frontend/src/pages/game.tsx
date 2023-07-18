@@ -5,6 +5,7 @@ import {
   startGame,
   sendVotes,
   endGame,
+  joinGame,
 } from "@/api";
 import { promises as fs } from "fs";
 import { useRouter } from "next/router";
@@ -21,6 +22,7 @@ import { Data } from "@/idata";
 import { RoleDisplay } from "@/components/roles";
 import path from "path";
 import getSessionJWT from "@/session";
+import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 
 function PlayerInfo({ name }: { name?: string }) {
   return (
@@ -41,15 +43,17 @@ function PlayerInfo({ name }: { name?: string }) {
   );
 }
 
-export default function Game({ data }: { data: Data }) {
+export default function Game({
+  data,
+  gameState,
+}: {
+  data: Data;
+  gameState: GameState;
+}) {
   const router = useRouter();
-  const [game, setGame] = useState(null as GameState | null);
+  const [game, setGame] = useState(gameState as GameState);
   const inviteLinkRef = useRef<HTMLParagraphElement>(null);
   const [votes, setVotes] = useState({} as { [key: string]: string });
-
-  useEffect(() => {
-    refreshGame();
-  }, []);
 
   useEffect(() => {
     var running = true;
@@ -59,14 +63,6 @@ export default function Game({ data }: { data: Data }) {
         while (running) {
           await sleep(3000);
 
-          /* var updates = await getUpdates();
-
-          if (updates && updates.length > 0) {
-            for (var i = 0; i < updates.length; ++i) {
-              new_game = applyUpdate(new_game, updates[i]);
-            }
-            setGame(new_game);
-          } */
           refreshGame();
         }
       }
@@ -193,7 +189,7 @@ export default function Game({ data }: { data: Data }) {
                   <div className="flex flex-col gap-5 justify-center items-center">
                     <p className="text-3xl">Invite your friends</p>
                     <p ref={inviteLinkRef} className="text-xl select-text">
-                      {ROOT_URL}/game/join?uid={game?.uid}
+                      {ROOT_URL}/game?join={game.uid}
                     </p>
                     <button
                       onClick={() => {
@@ -224,9 +220,12 @@ export default function Game({ data }: { data: Data }) {
                 <PlayerInfos />
                 <RoleDisplay playerState={game.player_state} data={data} />
               </div>
-              <div className="flex flex-row items-center gap-40 text-3xl">
+              <div className="flex flex-row items-center gap-40 text-3xlnull">
                 <p>Currently in draft mode</p>
-                <Button className="py-3" onClick={startGame}>
+                <Button
+                  className="py-3"
+                  onClick={() => startGame().then(refreshGame)}
+                >
                   Start game
                 </Button>
               </div>
@@ -242,7 +241,10 @@ export default function Game({ data }: { data: Data }) {
               </div>
               <div className="flex flex-row items-center gap-40 text-3xl">
                 <p>Currently in game</p>
-                <Button className="py-3" onClick={endGame}>
+                <Button
+                  className="py-3"
+                  onClick={() => endGame().then(refreshGame)}
+                >
                   End game
                 </Button>
               </div>
@@ -296,7 +298,7 @@ export default function Game({ data }: { data: Data }) {
                 </tbody>
               </table>
               <Button
-                onClick={() => sendVotes(votes)}
+                onClick={() => sendVotes(votes).then(refreshGame)}
                 disabled={Object.keys(votes).length != 4 || hasVoted()}
                 className="text-3xl w-fit py-3"
               >
@@ -366,9 +368,50 @@ export default function Game({ data }: { data: Data }) {
   );
 }
 
-export async function getStaticProps() {
-  var buf = await fs.readFile(path.join(process.cwd(), "data.json"), "utf8");
-  return { props: { data: JSON.parse(buf) } };
-}
+export async function getServerSideProps(
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<{ data: Data; gameState: GameState }>> {
+  if ("session" in context.req.cookies) {
+    let bearer = context.req.cookies["session"];
 
-Game.requireLogin = true;
+    if ("join" in context.query) {
+      await joinGame(context.query["join"] as string, bearer);
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/game",
+        },
+      };
+    } else {
+
+      let game = await getCurrentGame(bearer);
+
+      if (game.ok) {
+        return {
+          props: {
+            data: JSON.parse(
+              await fs.readFile(path.join(process.cwd(), "data.json"), "utf8")
+            ),
+            gameState: game.value,
+          },
+        };
+      } else {
+
+        return {
+          redirect: {
+            permanent: false,
+            destination: "/",
+          },
+        };
+      }
+    }
+  } else {
+
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/login",
+      },
+    };
+  }
+}

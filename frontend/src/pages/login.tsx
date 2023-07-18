@@ -22,7 +22,7 @@ export default function Login({ session, setSessionToken }: any) {
 
   useEffect(() => {
     if (session) {
-      router.back();
+      router.push("/");
     }
   }, [session]);
 

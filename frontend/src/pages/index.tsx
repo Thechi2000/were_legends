@@ -1,18 +1,11 @@
 import { createGame, getCurrentGame, login } from "@/api";
 import { Button, Href } from "@/components/inputs";
+import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
 export default function Home({ session, setSessionToken }: any) {
   const router = useRouter();
-
-  useEffect(() => {
-    getCurrentGame().then((res) => {
-      if (res.ok) {
-        router.push("/game");
-      }
-    });
-  }, []);
 
   return (
     <div className="h-full flex flex-col justify-center items-center h-screen gap-20 pb-20">
@@ -37,6 +30,7 @@ export default function Home({ session, setSessionToken }: any) {
           className="w-72 py-3"
           onClick={() => {
             setSessionToken(null);
+            router.reload();
           }}
         >
           <p className="text-4xl">Log out</p>
@@ -53,4 +47,28 @@ export default function Home({ session, setSessionToken }: any) {
   );
 }
 
-Home.requireLogin = true;
+export async function getServerSideProps(
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<{}>> {
+  if ("session" in context.req.cookies) {
+    let bearer = context.req.cookies["session"];
+
+    if ((await getCurrentGame(bearer)).ok) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/game",
+        },
+      };
+    } else {
+      return { props: {} };
+    }
+  } else {
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/login",
+      },
+    };
+  }
+}

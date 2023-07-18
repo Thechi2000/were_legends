@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import getSessionJWT, { Session, decodeSession } from "@/session";
 import { useRouter } from "next/router";
+import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 
 const TITLE_FONT = localFont({
   src: "../../fonts/Rhuma Sinera Regular.ttf",
@@ -50,4 +51,19 @@ export default function App({ Component, pageProps }: any) {
       />
     </main>
   );
+}
+
+export async function getServerSideProps(
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<{}>> {
+  if ("session" in context.req.cookies) {
+    return { props: {} };
+  } else {
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/login",
+      },
+    };
+  }
 }
