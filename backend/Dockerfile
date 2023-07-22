@@ -9,7 +9,7 @@ RUN cargo install cargo-build-deps
 RUN cargo new app
 WORKDIR /app
 
-COPY Cargo.lock Cargo.toml ./
+COPY Cargo.toml ./
 
 RUN cargo build-deps --release
 
