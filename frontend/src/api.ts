@@ -1,6 +1,6 @@
 import Cookies from "universal-cookie";
 
-var API_ROOT = "http://localhost/api";
+var API_ROOT = process.env.NEXT_PUBLIC_API_URL;
 
 export interface LoginResponse {
   token: string;
