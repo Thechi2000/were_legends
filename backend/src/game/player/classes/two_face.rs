@@ -28,7 +28,7 @@ impl Class for TwoFace {
         let mut lock = self.state.lock().unwrap();
 
         lock.inting = thread_rng().gen();
-        lock.next_swap_time = Uniform::new(5.0, 20.0).sample(&mut thread_rng());
+        lock.next_swap_time = Uniform::new(300.0, 600.0).sample(&mut thread_rng());
 
         player.proxy.send_message(Message::TwoFaceState {
             inting: lock.inting,
@@ -49,7 +49,7 @@ impl Class for TwoFace {
         if let GameInfoMutation::Duration((_, new_time)) = mutation {
             if lock.next_swap_time <= *new_time as f64 {
                 lock.inting = !lock.inting;
-                lock.next_swap_time += Uniform::new(5.0, 20.0).sample(&mut thread_rng());
+                lock.next_swap_time += Uniform::new(300.0, 600.0).sample(&mut thread_rng());
 
                 println!("Assigning new inting: {} at {:?}", lock.inting, new_time);
 

@@ -56,8 +56,6 @@ function getSessionToken(): string | null {
 }
 
 export async function login(name: string): Promise<LoginResponse | ApiError> {
-  console.error("test");
-  console.error(API_URL);
   let res = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: {

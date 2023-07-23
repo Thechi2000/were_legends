@@ -50,7 +50,7 @@ impl Class for Droid {
     ) -> Result<(), crate::routes::error::Error> {
         let mut lock = self.state.lock().unwrap();
 
-        lock.next_mission_timestamp = Normal::new(20.0, 2.0)
+        lock.next_mission_timestamp = Normal::new(600.0, 120.0)
             .map_err(Error::from)?
             .sample(&mut thread_rng());
 
@@ -68,7 +68,7 @@ impl Class for Droid {
         #[allow(irrefutable_let_patterns)]
         if let GameInfoMutation::Duration((_, new_time)) = mutation {
             if lock.next_mission_timestamp <= *new_time as f64 {
-                lock.next_mission_timestamp += Normal::new(20.0, 2.0)
+                lock.next_mission_timestamp += Normal::new(300.0, 120.0)
                     .map_err(Error::from)?
                     .sample(&mut thread_rng());
 
