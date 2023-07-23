@@ -1,5 +1,6 @@
 import Cookies from "universal-cookie";
-import { API_URL } from "@/config";
+
+const API_URL = "/api";
 
 export interface LoginResponse {
   token: string;

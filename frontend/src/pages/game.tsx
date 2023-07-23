@@ -23,7 +23,6 @@ import { RoleDisplay } from "@/components/roles";
 import path from "path";
 import getSessionJWT from "@/session";
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import { BASE_URL } from "@/config";
 
 function PlayerInfo({ name }: { name?: string }) {
   return (
@@ -190,7 +189,7 @@ export default function Game({
                   <div className="flex flex-col gap-5 justify-center items-center">
                     <p className="text-3xl">Invite your friends</p>
                     <p ref={inviteLinkRef} className="text-xl select-text">
-                      {BASE_URL}/game?join={game.uid}
+                      {router.basePath}/game?join={game.uid}
                     </p>
                     <button
                       onClick={() => {
