@@ -1,6 +1,6 @@
 import Cookies from "universal-cookie";
 
-const API_URL = "/api";
+const API_URL = "https://al.lmermod.ch/api";
 
 export interface LoginResponse {
   token: string;

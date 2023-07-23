@@ -14,7 +14,6 @@ const TITLE_FONT = localFont({
 export default function App({ Component, pageProps }: any) {
   var [cookies, setCookies, removeCookies] = useCookies(["session"]);
   const [session, setSession] = useState(null as Session | null);
-  const router = useRouter();
 
   function setSessionToken(token: string) {
     if (token) {
@@ -30,12 +29,6 @@ export default function App({ Component, pageProps }: any) {
     var tmp = getSessionJWT();
     setSession(tmp);
   }, []);
-
-  useEffect(() => {
-    if (!session) {
-      router.push("/login");
-    }
-  }, [session, router]);
 
   return (
     <main className="bg-sky-600 min-h-screen text-slate-200 select-none">
