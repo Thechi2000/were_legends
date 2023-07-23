@@ -1,6 +1,5 @@
 import Cookies from "universal-cookie";
-
-var API_ROOT = process.env.NEXT_PUBLIC_API_URL;
+import { API_URL } from "@/config";
 
 export interface LoginResponse {
   token: string;
@@ -56,7 +55,9 @@ function getSessionToken(): string | null {
 }
 
 export async function login(name: string): Promise<LoginResponse | ApiError> {
-  let res = await fetch(`${API_ROOT}/login`, {
+  console.error("test");
+  console.error(API_URL);
+  let res = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -68,7 +69,7 @@ export async function login(name: string): Promise<LoginResponse | ApiError> {
 }
 
 export async function createGame(bearer?: string): Promise<string | null> {
-  let res = await fetch(`${API_ROOT}/game`, {
+  let res = await fetch(`${API_URL}/game`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -81,7 +82,7 @@ export async function getGame(
   uid: string,
   bearer?: string
 ): Promise<GameState | null> {
-  let res = await fetch(`${API_ROOT}/game/${uid}`, {
+  let res = await fetch(`${API_URL}/game/${uid}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -93,7 +94,7 @@ export async function getGame(
 export async function getCurrentGame(
   bearer?: string
 ): Promise<Response<GameState>> {
-  let res = await fetch(`${API_ROOT}/game`, {
+  let res = await fetch(`${API_URL}/game`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -103,7 +104,7 @@ export async function getCurrentGame(
 }
 
 export async function joinGame(uid: string, bearer?: string) {
-  let res = await fetch(`${API_ROOT}/game/${uid}/join`, {
+  let res = await fetch(`${API_URL}/game/${uid}/join`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -113,7 +114,7 @@ export async function joinGame(uid: string, bearer?: string) {
 }
 
 export async function startGame(bearer?: string) {
-  let res = await fetch(`${API_ROOT}/game/start`, {
+  let res = await fetch(`${API_URL}/game/start`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -122,7 +123,7 @@ export async function startGame(bearer?: string) {
 }
 
 export async function endGame(bearer?: string) {
-  let res = await fetch(`${API_ROOT}/game/end`, {
+  let res = await fetch(`${API_URL}/game/end`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -131,7 +132,7 @@ export async function endGame(bearer?: string) {
 }
 
 export async function quitGame(bearer?: string) {
-  await fetch(`${API_ROOT}/game/quit`, {
+  await fetch(`${API_URL}/game/quit`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
@@ -143,7 +144,7 @@ export async function sendVotes(
   votes: { [key: string]: string },
   bearer?: string
 ) {
-  await fetch(`${API_ROOT}/game/votes`, {
+  await fetch(`${API_URL}/game/votes`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${bearer || getSessionToken()}`,
